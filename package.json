@@ -1,0 +1,19 @@
+{
+  "name": "login-api",
+  "version": "1.0.0",
+  "description": "Login API",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sunny",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "md5": "^2.3.0",
+    "ngrok": "^3.4.0",
+    "pg": "^8.5.1",
+    "sequelize": "^6.5.0",
+    "sqlite3": "^5.0.1"
+  }
+}
