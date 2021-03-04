@@ -1,7 +1,7 @@
 const tweetdb = require("../model/Tweets")
 const friendshipClass = require("../classes/Friendship/Friendship")
 const userClass = require("../classes/User/User")
-
+const { Op } = require("sequelize")
 const TEXT = require("../text").TEXT
 const utils = require("../utils");
 const userFunction = require("../classes//User/Function")
@@ -13,61 +13,85 @@ const constantFile = require("../classes/User/Constant")
  * @param {object} req 
  * @param {object} res 
  */
-exports.searchUser = async(req, res) => {
-    let reqEmail = req.body.email
-    reqEmail = reqEmail.toString()
+exports.searchUser = async (req, res) => {
+    let reqEmailorName = req.body.email
+    reqEmailorName = reqEmailorName.toString()
     let reqUserid = parseInt(req.body.uid)
-    let errors = userFunction.emptySearchField(reqEmail, reqUserid)
+    let errors = userFunction.emptySearchField(reqEmailorName, reqUserid)
     if (errors.length) {
         return res.send(utils.sendResponse(false, "", errors.join(",")))
     }
     try {
+        // let whereData = {
+        //     email: reqEmail
+        // }
         let whereData = {
-            email: reqEmail
+            [Op.and]: [
+                {
+                    [Op.or]: [
+                        {
+                            name: {
+                                [Op.iLike]: '%' + reqEmailorName + '%'
+                            }
+                        },
+                        {
+                            email: reqEmailorName
+                        }
+                    ]
+                },
+                {
+                    id: {
+                        [Op.ne]: reqUserid
+                    }
+                }
+            ]
         }
         const userSearchResponse = await userClass.searchUser(whereData)
-        const userSearch = userSearchResponse.data
-        if (userSearch == null) {
+        const userSearchArray = userSearchResponse.data
+        // console.log(userSearch)
+        if (userSearchArray.length == 0) {
             let data = { relationStatus: false }
             res.send(utils.sendResponse(false, data, TEXT.noUser))
         }
-        const searchid = userSearch.id
-        const searchEmail = userSearch.email
-        const searchName = userSearch.name
-        let userid1 = reqUserid
-        let userid2 = searchid
-        if (userid1 > userid2) {
-            let temp = userid1
-            userid1 = userid2
-            userid2 = temp
-        }
-        let whereDataRelation = {
-            user1_id: userid1,
-            user2_id: userid2
-        }
-        const userRelationSearchResponse = await friendshipClass.friendshipCheck(whereDataRelation)
-        const userRelationSearch = userRelationSearchResponse.data
-        if (userRelationSearch.length == 0) {
-            let data = {
-                relationStatus: false,
-                id: searchid,
-                name: searchName,
-                email: searchEmail,
+        for (const userSearch of userSearchArray) {
+            console.log(userSearch.name)
+            const searchid = userSearch.id
+            const searchEmail = userSearch.email
+            const searchName = userSearch.name
+            let userid1 = reqUserid
+            let userid2 = searchid
+            if (userid1 > userid2) {
+                let temp = userid1
+                userid1 = userid2
+                userid2 = temp
             }
-            res.send(utils.sendResponse(true, data, TEXT.noRelation))
-        }
-        else {
-            let data = {
-                relationStatus: true,
-                status: true,
-                id: searchid,
-                name: searchName,
-                email: searchEmail,
-                message: TEXT.InRelation,
-                data: userRelationSearch[0]
+            let whereDataRelation = {
+                user1_id: userid1,
+                user2_id: userid2
             }
-            res.send(utils.sendResponse(true, data, ""))
+            const userRelationSearchResponse = await friendshipClass.friendshipCheck(whereDataRelation)
+            const userRelationSearch = userRelationSearchResponse.data
+            if (userRelationSearch.length == 0) {
+                userSearch["friends"] = {
+                    relationStatus: false,
+                    id: searchid,
+                    name: searchName,
+                    email: searchEmail,
+                }
+            }
+            else {
+                userSearch["friends"] = {
+                    relationStatus: true,
+                    status: true,
+                    id: searchid,
+                    name: searchName,
+                    email: searchEmail,
+                    message: TEXT.InRelation,
+                    data: userRelationSearch[0]
+                }
+            }
         }
+        res.send(utils.sendResponse(true, userSearchArray, ""))
     } catch (error) {
         res.send(utils.sendResponse(false, "", error));
     }
@@ -79,7 +103,7 @@ exports.searchUser = async(req, res) => {
  * @param {object} req 
  * @param {object} res 
  */
-exports.usersAllTweets = async(req, res) => {
+exports.usersAllTweets = async (req, res) => {
     try {
         let pageno = parseInt(req.body.pagenum);
         pageno = pageno - 1;
@@ -114,7 +138,7 @@ exports.usersAllTweets = async(req, res) => {
  * @param {object} req 
  * @param {object} res 
  */
-exports.allUsersAllTweets = async(req, res) => {
+exports.allUsersAllTweets = async (req, res) => {
     let includeData = ["tweets"]
     try {
         const allUsersAllTweetsResponse = await userClass.allUsersAllTweets(includeData)
@@ -130,7 +154,7 @@ exports.allUsersAllTweets = async(req, res) => {
  * @param {object} req 
  * @param {object} res 
  */
-exports.emailVerification = async(req, res) => {
+exports.emailVerification = async (req, res) => {
     let reqEmail = req.body.email.toString()
     let errors = []
     if (!reqEmail) {
@@ -161,7 +185,7 @@ exports.emailVerification = async(req, res) => {
  * @param {object} req 
  * @param {object} res 
  */
-exports.loginPasswordAuth = async(req, res) => {
+exports.loginPasswordAuth = async (req, res) => {
     let reqEmail = req.body.email.toString()
     let reqPassword = req.body.password.toString()
     let errors = userFunction.emptyLoginField(reqEmail, reqPassword)
@@ -198,7 +222,7 @@ exports.loginPasswordAuth = async(req, res) => {
  * @param {object} req 
  * @param {object} res 
  */
-exports.signupUser = async(req, res) => {
+exports.signupUser = async (req, res) => {
     let reqName = req.body.name.toString()
     let reqEmail = req.body.email.toString()
     let reqPassword = req.body.password.toString()
@@ -224,10 +248,10 @@ exports.signupUser = async(req, res) => {
  * @param {object} req 
  * @param {object} res 
  */
-exports.updateNamePassword = async(req, res) => {
+exports.updateNamePassword = async (req, res) => {
     //updating Name
     let reqType = parseInt(req.params.type)
-    if(!reqType){
+    if (!reqType) {
         return res.send(utils.sendResponse(false, "", TEXT.noUpdateType))
     }
     if (req.params.type == constantFile.updateTypeName) {
@@ -274,7 +298,7 @@ exports.updateNamePassword = async(req, res) => {
                 id: reqUserid
             }
             let loginResponse = await userClass.searchUser(whereData)
-            let login = loginResponse.data 
+            let login = loginResponse.data
             if (login.password != reqPassword) {
                 res.send(utils.sendResponse(false, "", ERRORS.noPasswordMatch))
             }

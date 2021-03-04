@@ -1,5 +1,3 @@
-//success, data, error
-
 /**
  * Sends response from class function to controller
  * @param {Boolean} success 

@@ -14,6 +14,7 @@ Router.get("/friendReject/:userid1/:userid2", friendshipFunc.friendRequestReject
 //gets tweets of user's friends
 Router.get("/getTweets/:uid/:pageno", friendshipFunc.friendsTweet)
 
-
+//gets all friend request from different user that can be accepted or rejected
+Router.post("/all/friendRequest", friendshipFunc.allFriendRequest)
 
 module.exports = Router

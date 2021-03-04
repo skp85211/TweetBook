@@ -6,7 +6,7 @@ const utils = require("../../utils")
  * @param {object} whereData 
  */
 exports.searchUser = async (whereData) => {
-    const userSearch = await userdb.findOne({
+    const userSearch = await userdb.findAll({
         where: whereData
     })
     return utils.classResponse(true, userSearch, "")

@@ -1,8 +1,21 @@
 const tweetdb = require("../../model/Tweets")
 const friendshipdb = require("../../model/Friendship")
+const userdb = require("../../model/User")
 const constant = require("./constant")
 const utils = require("../../utils")
 const likes = require("../../model/Likes")
+
+/**
+ * 
+ * @param {Object} whereData 
+ */
+exports.allFriends = async(whereData) => {
+    const allFriends = await userdb.findAll({
+        where : whereData,
+        attributes : ['id', 'name', 'email']
+    })
+    return utils.classResponse(true, allFriends, "")
+}
 
 /**
  * check if users are already in any relation (checks relation status)
@@ -21,7 +34,6 @@ exports.friendshipCheck = async (whereData) => {
  */
 exports.friendshipRequestSend = async (whereDataCreate) => {
     const friendRequest = await friendshipdb.create(whereDataCreate)
-    // return friendRequest
     return utils.classResponse(true, friendRequest, "")
 }
 

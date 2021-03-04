@@ -53,7 +53,7 @@ exports.allLatestTweets = async(req, res) => {
  */
 exports.createTweet = async(req, res) => {
     let reqUserid = parseInt(req.body.uid)
-    let reqTweet = parseInt(req.body.tweet)
+    let reqTweet = req.body.tweet.toString()
     let errors = tweetFunction.emptyFieldCreateTweet(reqUserid, reqTweet)
     if(errors.length){
         return res.send(utils.sendResponse(false, "", errors.join(",")))

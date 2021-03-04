@@ -25,9 +25,7 @@ const user = sequelize.define('user', {
     }
 
 }, {
-    freezeTableName: true,
-    createdAt:false,
-    timestamps:false
+    freezeTableName: true
 })
 
 //user - tweet (1:n relation)

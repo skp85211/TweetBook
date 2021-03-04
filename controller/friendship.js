@@ -259,3 +259,49 @@ exports.friendsTweet = async(req, res) => {
     }
     res.send(utils.sendResponse(true, friendTweets, ""))
 }
+
+
+exports.allFriendRequest = async(req, res) => {
+    let reqUserid = parseInt(req.body.userid)
+    if(!reqUserid){
+        return res.send(utils.sendResponse(false, "", TEXT.noUserId))
+    }
+    let whereData = {
+        [Op.and]: [
+            {
+                [Op.or]: [
+                    { user1_id: reqUserid },
+                    { user2_id: reqUserid }
+                ]
+            },
+            {
+                [Op.and]:[
+                    { status: constant.pendingStatus },
+                    { action_uid : {
+                        [Op.ne]:reqUserid
+                    } }
+                ]
+                
+            }
+        ]
+    }
+    const friendListResponse = await friendshipClass.friendsList(whereData)
+    const friendList = friendListResponse.data
+    if(friendList.length == 0) {
+        return res.send(utils.sendResponse(false, "", TEXT.noFriends))
+    }
+    let friendListArr = []
+    for (const dataItems of friendList) {
+        if (dataItems.user1_id != reqUserid) {
+            friendListArr.push(dataItems.user1_id)
+        }
+        else {
+            friendListArr.push(dataItems.user2_id)
+        }
+    }
+    let whereDataFriends = {
+        id: friendListArr
+    }
+    const allFriendRequestResponse = await friendshipClass.allFriends(whereDataFriends)
+    res.send(utils.sendResponse(true, allFriendRequestResponse.data, ""))
+}
