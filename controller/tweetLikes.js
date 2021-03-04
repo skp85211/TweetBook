@@ -10,7 +10,7 @@ const TEXT = require("../text").TEXT
  * @param {Object} res 
  */
 exports.createLike = async (req, res) => {
-    let reqUserId = parseInt(req.params.userid)
+    let reqUserId = parseInt(req.body.userid)
     let reqTweetId = parseInt(req.params.tweetid)
     let reqLikeType = req.params.likeType.toString()
     if(!reqUserId || !reqTweetId || !reqLikeType){
@@ -41,7 +41,7 @@ exports.createLike = async (req, res) => {
  * @param {Object} res 
  */
 exports.readLike = async (req, res) => {
-    let reqUserId = parseInt(req.params.userid)
+    let reqUserId = parseInt(req.body.userid)
     let reqTweetId = parseInt(req.params.tweetid)
     if(!reqUserId || !reqTweetId){
         return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
@@ -64,7 +64,7 @@ exports.readLike = async (req, res) => {
  * @param {Object} res 
  */
 exports.deleteLike = async (req, res) => {
-    let reqUserId = parseInt(req.params.userid)
+    let reqUserId = parseInt(req.body.userid)
     let reqTweetId = parseInt(req.params.tweetid)
     if(!reqUserId || !reqTweetId){
         return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))

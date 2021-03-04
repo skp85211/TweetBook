@@ -19,7 +19,7 @@ exports.allLatestTweets = async(req, res) => {
         pageno = pageno-1;
         let pageSize = constant.limitTweets;
         let offsetValue = (pageno*pageSize);
-        let reqUserid = parseInt(req.body.uid)
+        let reqUserid = parseInt(req.body.userid)
         if (!reqUserid) {
             return res.send(utils.sendResponse(false, "", TEXT.noUserId))
         }
@@ -52,7 +52,7 @@ exports.allLatestTweets = async(req, res) => {
  * @param {object} res 
  */
 exports.createTweet = async(req, res) => {
-    let reqUserid = parseInt(req.body.uid)
+    let reqUserid = parseInt(req.body.userid)
     let reqTweet = req.body.tweet.toString()
     let errors = tweetFunction.emptyFieldCreateTweet(reqUserid, reqTweet)
     if(errors.length){
@@ -89,7 +89,7 @@ exports.createTweet = async(req, res) => {
  * @param {object} res 
  */
 exports.readTweet = async(req, res) => {
-    let reqUserid = parseInt(req.body.uid)
+    let reqUserid = parseInt(req.body.userid)
     if(!reqUserid){
         return res.send(utils.classResponse(false, "", TEXT.noUserId))
     }
@@ -115,7 +115,7 @@ exports.readTweet = async(req, res) => {
  * @param {object} res 
  */
 exports.updateTweet = async(req, res) => {
-    let reqUserid = parseInt(req.body.id)
+    let reqUserid = parseInt(req.body.userid)
     let reqId = parseInt(req.body.id)
     let reqTweet = parseInt(req.body.tweet)
     let errors = tweetFunction.emptyFieldUpdateTweet(reqId, reqUserid, reqTweet)

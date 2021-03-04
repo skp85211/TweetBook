@@ -16,7 +16,7 @@ const friendshipClassFunc = require("../classes/Friendship/Function")
 exports.createComment = async(req, res) => {
     //empty field check
     let reqTweetid = parseInt(req.body.tid)
-    let reqUserid = parseInt(req.body.uid)
+    let reqUserid = parseInt(req.body.userid)
     let reqComment = req.body.comment.toString()
     let errors = emptyFieldCreateComment(reqTweetid, reqUserid, reqComment);
     if (errors.length) {
@@ -48,7 +48,7 @@ exports.createComment = async(req, res) => {
     }
     
     try {
-        const newCommentResponse = await CommentClass.createComment(req.body.tid, req.body.uid, req.body.comment)
+        const newCommentResponse = await CommentClass.createComment(req.body.tid, req.body.userid, req.body.comment)
         const newComment = newCommentResponse.data
         res.send(utils.sendResponse(true, newComment, ""))
     } catch (error) {
@@ -88,7 +88,7 @@ exports.updateComment = async(req, res) => {
     try {
         let reqId = parseInt(req.body.id)
         let reqTweetid = parseInt(req.body.tid)
-        let reqUserid = parseInt(req.body.uid)
+        let reqUserid = parseInt(req.body.userid)
         let reqComment = req.body.comment.toString()
         if(!reqId || !reqTweetid || !reqUserid || !reqComment){
             return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
@@ -118,7 +118,7 @@ exports.deleteComment = async(req, res) => {
     try {
         let reqId = parseInt(req.body.id)
         let reqTweetid = parseInt(req.body.tid)
-        let reqUserid = parseInt(req.body.uid)
+        let reqUserid = parseInt(req.body.userid)
         if(!reqId || !reqTweetid || !reqUserid){
             return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
         }
@@ -161,7 +161,7 @@ exports.commentsUnderTweets = async(req, res) => {
     try {
         let pageno = parseInt(req.params.pageno);
         let reqTweetid = parseInt(req.params.tweetid)
-        let reqUserid = parseInt(req.params.userid)
+        let reqUserid = parseInt(req.body.userid)
         if(!pageno || !reqTweetid || !reqUserid){
             return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
         }

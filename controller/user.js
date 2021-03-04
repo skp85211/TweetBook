@@ -7,6 +7,7 @@ const utils = require("../utils");
 const userFunction = require("../classes//User/Function")
 const { ERRORS } = require('../errorConstants');
 const constantFile = require("../classes/User/Constant")
+const jwtauth = require("../jwtAuth")
 
 /**
  * search user with email/phone and friendship relation and return details
@@ -16,7 +17,7 @@ const constantFile = require("../classes/User/Constant")
 exports.searchUser = async (req, res) => {
     let reqEmailorName = req.body.email
     reqEmailorName = reqEmailorName.toString()
-    let reqUserid = parseInt(req.body.uid)
+    let reqUserid = parseInt(req.body.userid)
     let errors = userFunction.emptySearchField(reqEmailorName, reqUserid)
     if (errors.length) {
         return res.send(utils.sendResponse(false, "", errors.join(",")))
@@ -109,7 +110,7 @@ exports.usersAllTweets = async (req, res) => {
         pageno = pageno - 1;
         let pageSize = parseInt(req.body.pagesize);
         let offsetValue = (pageno * pageSize);
-        let userid = parseInt(req.body.id)
+        let userid = parseInt(req.body.userid)
         let errors = userFunction.emptyusersAllTweets(pageno, pageSize, userid)
         if (errors.length) {
             return res.send(utils.sendResponse(false, "", errors.join(",")))
@@ -197,7 +198,7 @@ exports.loginPasswordAuth = async (req, res) => {
             email: reqEmail
         }
         let loginResponse = await userClass.searchUser(whereData)
-        let login = loginResponse.data
+        let login = loginResponse.data[0]
         if (login.length == 0) {
             res.send(utils.sendResponse(false, "", TEXT.noUserExists))
         }
@@ -205,10 +206,15 @@ exports.loginPasswordAuth = async (req, res) => {
             res.send(utils.sendResponse(false, "", ERRORS.noPasswordMatch))
         }
         else {
+            console.log(login.id, "id")
+            const accessToken = jwtauth.generateAccessToken(login.id)
+            // const auth = jwtauth.authenticateToken(accessToken)
+            // console.log(auth, "Auth")
             let data = {
                 userId: login.id,
                 name: login.name,
-                email: login.email
+                email: login.email,
+                token : accessToken
             }
             res.send(utils.sendResponse(true, data, ""))
         }
@@ -255,7 +261,7 @@ exports.updateNamePassword = async (req, res) => {
         return res.send(utils.sendResponse(false, "", TEXT.noUpdateType))
     }
     if (req.params.type == constantFile.updateTypeName) {
-        let reqUserid = parseInt(req.body.uid)
+        let reqUserid = parseInt(req.body.userid)
         let reqName = req.body.name.toString()
         let reqPassword = req.body.password.toString()
         let errors = userFunction.emptyUpdateName(reqUserid, reqName, reqPassword)
@@ -268,7 +274,7 @@ exports.updateNamePassword = async (req, res) => {
                 id: reqUserid
             }
             let loginResponse = await userClass.searchUser(whereData)
-            let login = loginResponse.data
+            let login = loginResponse.data[0]
             if (login.password != reqPassword) {
                 res.send(utils.sendResponse(false, "", ERRORS.noPasswordMatch))
             }
@@ -286,7 +292,7 @@ exports.updateNamePassword = async (req, res) => {
     }
     //updating password
     if (req.params.type == constantFile.updateTypePassword) {
-        let reqUserid = parseInt(req.body.uid)
+        let reqUserid = parseInt(req.body.userid)
         let reqPassword = req.body.password.toString()
         let reqNewPassword = req.body.newpassword.toString()
         let errors = userFunction.emptyUpdatePassword(reqUserid, reqPassword, reqNewPassword)
@@ -298,7 +304,7 @@ exports.updateNamePassword = async (req, res) => {
                 id: reqUserid
             }
             let loginResponse = await userClass.searchUser(whereData)
-            let login = loginResponse.data
+            let login = loginResponse.data[0]
             if (login.password != reqPassword) {
                 res.send(utils.sendResponse(false, "", ERRORS.noPasswordMatch))
             }

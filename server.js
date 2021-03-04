@@ -7,7 +7,6 @@ const bodyParser = require("body-parser")
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-
 const HTTP_PORT = 8000
 app.listen(HTTP_PORT, () => {
     console.log("Server running on port number : %PORT%".replace("%PORT%", HTTP_PORT))

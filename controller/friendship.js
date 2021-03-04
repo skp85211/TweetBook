@@ -129,7 +129,7 @@ exports.friendRequestReject = async(req, res) => {
  */
 exports.friendsTweet = async(req, res) => {
     let pageno = parseInt(req.params.pageno);
-    let reqUserid = parseInt(req.params.uid)
+    let reqUserid = parseInt(req.body.userid)
     if(!pageno || !reqUserid){
         return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
     }
