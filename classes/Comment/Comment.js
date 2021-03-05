@@ -1,6 +1,7 @@
 const commentdb = require("../../model/Comments")
 const tweetdb = require("../../model/Tweets")
 const userdb = require("../../model/User")
+const likes = require("../../model/Likes")
 const constant = require("./constant")
 const utils = require("../../utils")
 
@@ -9,7 +10,11 @@ const utils = require("../../utils")
  * @param {array} attr 
  * @param {object} whereData 
  */
-exports.checkTweetIdExists = async (attr, whereData) => {
+exports.checkTweetIdExists = async (reqTweetid) => {
+    let whereData = { 
+        id : reqTweetid
+    }
+    let attr = ['id']
     const tidCheck = await tweetdb.findAll({
         attributes: attr,
         where: whereData
@@ -22,9 +27,13 @@ exports.checkTweetIdExists = async (attr, whereData) => {
  * @param {array} attr 
  * @param {object} whereData 
  */
-exports.checkUserIdExists = async (attr, whereData) => {
+exports.checkUserIdExists = async (reqUserid) => {
+    let attribute = ['id']
+        let whereData = {
+            id:reqUserid
+        }
     const uidCheck = await userdb.findAll({
-        attributes: attr,
+        attributes: attribute,
         where: whereData
     })
     return utils.classResponse(true, uidCheck, "")
@@ -52,7 +61,11 @@ exports.createComment = async (tid, uid, comment) => {
  * @param {object} whereData 
  * @param {array} orderData 
  */
-exports.readComment = async (whereData, orderData) => {
+exports.readComment = async (reqTweetid) => {
+    let whereData = {
+        tid : reqTweetid
+    }
+    let orderData = ['createdAt', 'DESC']
     const comments = await commentdb.findAll({
         where: whereData,
         order: [
@@ -68,7 +81,15 @@ exports.readComment = async (whereData, orderData) => {
  * @param {object} updateData 
  * @param {object} whereData 
  */
-exports.updateComment = async (updateData, whereData) => {
+exports.updateComment = async (reqId, reqTweetid, reqUserid, reqComment) => {
+    let updateData = {comment : reqComment}
+    let whereData = {
+        [Op.and] : [
+            {id:reqId},
+            {tid:reqTweetid},
+            {uid: reqUserid}
+        ]
+    }
     const updateComment = await commentdb.update(updateData, {
         where: whereData
     })
@@ -80,7 +101,12 @@ exports.updateComment = async (updateData, whereData) => {
  * Delete comments from database
  * @param {object} whereData 
  */
-exports.deleteComment = async (whereData) => {
+exports.deleteComment = async (reqId, reqTweetid, reqUserid) => {
+    let whereData = {
+        id: reqId,
+        tid:reqTweetid,
+        uid: reqUserid
+    }
     const deleteComment = await commentdb.destroy({
         where: whereData
     })
@@ -105,7 +131,22 @@ exports.allInComment = async () => {
  * @param {array} orderData 
  * @param {Integer} oset 
  */
-exports.commentsUnderTweetsdb = async (whereData, includeData, orderData, oset) => {
+exports.commentsUnderTweetsdb = async (reqTweetid, oset) => {
+    let whereData = {
+        tid:reqTweetid
+    }
+    let includeData = [
+        {
+            model:userdb, as:"user",
+            attributes:['id','name']
+        },
+        {
+            model : likes, as:"likes"
+        }
+    ]
+    let orderData = [
+        ['createdAt', 'DESC']
+    ]
     const { count, rows } = await commentdb.findAndCountAll({
         where: whereData,
         include: includeData,

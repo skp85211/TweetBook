@@ -1,12 +1,8 @@
-const userdb = require("../model/User")
-const tweetClass = require("../classes/Tweets/Tweets")
 const friendshipClass = require("../classes/Friendship/Friendship")
 const utils = require("../utils")
 const TEXT = require("../text").TEXT
 const constant = require("../classes/Friendship/Constant")
-const likes = require("../model/Likes")
 const friendshipClassFunc = require("../classes/Friendship/Function")
-const { Op } = require("sequelize")
 
 /**
  * Check if the users are in any relation or not, if not send request with status pending (0)
@@ -14,11 +10,11 @@ const { Op } = require("sequelize")
  * @param {Object} res 
  */
 exports.friendRequest = async(req, res) => {
-    let user1id = parseInt(req.params.userid1)
+    let user1id = parseInt(req.body.userid)
     let user2id = parseInt(req.params.userid2)
-    const action_id = parseInt(req.params.userid1)
+    const action_id = user1id
     if(!user1id || !user2id || !action_id){
-        return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
+        return utils.sendResponse(res, false, {}, TEXT.someFieldsMissing)
     }
 
     //to make sure user1id < userid2 (always)
@@ -28,28 +24,16 @@ exports.friendRequest = async(req, res) => {
         user2id = temp
 
     }
-    let whereDataCheck = {
-        user1_id: user1id,
-        user2_id: user2id
-    }
     try {
-        const userPairResponse = await friendshipClass.friendshipCheck(whereDataCheck)
-        const userPair = userPairResponse.data
-        if (userPair.length != 0) {
-            res.send(utils.sendResponse(false, "", TEXT.alreadyInRelation))
+        const userPairResponse = await friendshipClass.friendshipCheck(user1id, user2id)
+        if (userPairResponse.data.length != 0) {
+            return utils.sendResponse(res, false, {}, TEXT.alreadyInRelation)
         }
-
-        let whereDataCreate = {
-            user1_id: user1id,
-            user2_id: user2id,
-            status: constant.pendingStatus,
-            action_uid: action_id
-        }
-        const friendRequestResponse = await friendshipClass.friendshipRequestSend(whereDataCreate)
+        const friendRequestResponse = await friendshipClass.friendshipRequestSend(user1id, user2id, action_id)
         const friendRequest = friendRequestResponse.data
-        res.send(utils.sendResponse(true, friendRequest, ""))
+        return utils.sendResponse(res, true, friendRequest, "")
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
 }
 
@@ -60,31 +44,22 @@ exports.friendRequest = async(req, res) => {
  * @param {object} res 
  */
 exports.friendRequestAccept = async(req, res) => {
-    let user1id = parseInt(req.params.userid1)
+    let user1id = parseInt(req.body.userid)
     let user2id = parseInt(req.params.userid2)
-    let action_id = parseInt(req.params.userid1)
+    let action_id = user1id
     if(!user1id || !user2id || !action_id){
-        return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
+        return utils.sendResponse(res, false, {}, TEXT.someFieldsMissing)
     }
     if (user1id > user2id) {
         let temp = user1id
         user1id = user2id
         user2id = temp
     }
-
-    let updateData = {
-        status: constant.acceptedStatus,
-        action_uid: action_id
-    }
-    let whereData = {
-        user1_id: user1id,
-        user2_id: user2id
-    }
     try {
-        const friendAcceptResponse = await friendshipClass.friendRequestUpdate(updateData, whereData)
-        res.send(utils.sendResponse(true, "", ""))
+        const friendAcceptResponse = await friendshipClass.friendRequestUpdate(constant.acceptedStatus, action_id, user1id, user2id)
+        return utils.sendResponse(res, true, {}, "")
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error));
+        return utils.sendResponse(res, false, {}, error)
     }
 }
 
@@ -94,31 +69,22 @@ exports.friendRequestAccept = async(req, res) => {
  * @param {object} res 
  */
 exports.friendRequestReject = async(req, res) => {
-    let user1id = parseInt(req.params.userid1)
+    let user1id = parseInt(req.body.userid)
     let user2id = parseInt(req.params.userid2)
-    let action_id = parseInt(req.params.userid1)
+    let action_id = user1id
     if(!user1id || !user2id || !action_id){
-        return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
+        return utils.sendResponse(res, false, {}, TEXT.someFieldsMissing)
     }
     if (user1id > user2id) {
         let temp = user1id
         user1id = user2id
         user2id = temp
     }
-
-    let updateData = {
-        status: constant.blockedStatus,
-        action_uid: action_id
-    }
-    let whereData = {
-        user1_id: user1id,
-        user2_id: user2id
-    }
     try {
-        const friendRejectResponse = await friendshipClass.friendRequestUpdate(updateData, whereData)
-        res.send(utils.sendResponse(true, "", ""))
+        const friendRejectResponse = await friendshipClass.friendRequestUpdate(constant.blockedStatus, action_id, user1id, user2id)
+        return utils.sendResponse(res, true, {}, "")
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error));
+        return utils.sendResponse(res, false, {}, error)
     }
 }
 
@@ -131,51 +97,17 @@ exports.friendsTweet = async(req, res) => {
     let pageno = parseInt(req.params.pageno);
     let reqUserid = parseInt(req.body.userid)
     if(!pageno || !reqUserid){
-        return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
+        return utils.sendResponse(res, false, {}, TEXT.someFieldsMissing)
     }
     pageno = pageno - 1;
     let psize = constant.limitTweets;
     let oset = (pageno * psize);
-    let whereData = {
-        [Op.and]: [
-            {
-                [Op.or]: [
-                    { user1_id: reqUserid },
-                    { user2_id: reqUserid }
-                ]
-            },
-            {
-                status: constant.acceptedStatus
-            }
-        ]
-    }
 
-    const friendListResponse = await friendshipClass.friendsList(whereData)
+    const friendListResponse = await friendshipClass.friendsList(reqUserid)
     const friendList = friendListResponse.data
     //if user doesn't have any friends , show all latest tweets
     if (friendList.length == 0) {
-        let whereDataNotFriends = {
-            uid:{
-                [Op.ne] : reqUserid
-            }
-        }
-        let includeDataNotFriends = [
-            {
-                model:userdb, as:"user",
-                attributes:['id', 'name']
-            },
-            {
-                model: likes, as: "likes",
-                where:{
-                    entity_type:TEXT.entityTweet
-                },
-                required : false
-            }
-        ]
-        let orderDataNotFriends = [
-            ['createdAt', 'DESC']
-        ]
-        const rowsRecordResponse = await tweetClass.allLatestTweets(whereDataNotFriends, includeDataNotFriends, orderDataNotFriends, oset)
+        const rowsRecordResponse = await friendshipClass.allLatestTweets(reqUserid, oset)
         const rowsRecord = rowsRecordResponse.data
         for(const dataItems of rowsRecord){
             dataItems["tweetLikesCount"] = friendshipClassFunc.countDiffLikes(dataItems.likes)
@@ -184,12 +116,7 @@ exports.friendsTweet = async(req, res) => {
             }
             else{
                 let tweetid = dataItems.id
-                let whereData = {
-                    user_id : reqUserid,
-                    entity_type : TEXT.entityTweet,
-                    entity_id : tweetid
-                }
-                const isTweetLikedByMe = await friendshipClass.isTweetLikedByMe(whereData)
+                const isTweetLikedByMe = await friendshipClass.isTweetLikedByMe(reqUserid, tweetid)
                 if(isTweetLikedByMe.success == false){
                     
                     dataItems["isTweetLikedByMe"] = false
@@ -200,7 +127,7 @@ exports.friendsTweet = async(req, res) => {
                 }
             }
         }
-        res.send(utils.sendResponse(true, rowsRecord, ""))
+        return utils.sendResponse(res, true, rowsRecord, "")
     }
 
     //IF user have atleast one friend show them friend's tweets
@@ -213,26 +140,8 @@ exports.friendsTweet = async(req, res) => {
             friendListArr.push(dataItems.user2_id)
         }
     }
-    let whereDataFriends = {
-        uid: friendListArr
-    }
-    let includeDataFriends = [
-        {
-            model: userdb, as: "user",
-            attributes: ['id', 'name']
-        },
-        {
-            model: likes, as: "likes",
-            where:{
-                entity_type : TEXT.entityTweet
-            },
-            required : false
-        }
-    ]
-    let orderDataFriends = [
-        ['createdAt', 'DESC']
-    ]
-    const friendTweetsResponse = await friendshipClass.friendsTweets(whereDataFriends, includeDataFriends, orderDataFriends, oset)
+
+    const friendTweetsResponse = await friendshipClass.friendsTweets(friendListArr, oset)
     const friendTweets = friendTweetsResponse.data
     for(const dataItems of friendTweets){
         dataItems["tweetLikesCount"] = friendshipClassFunc.countDiffLikes(dataItems.likes)
@@ -241,12 +150,7 @@ exports.friendsTweet = async(req, res) => {
         }
         else{
             let tweetid = dataItems.id
-            let whereData = {
-                user_id : reqUserid,
-                entity_type : TEXT.entityTweet,
-                entity_id : tweetid
-            }
-            const isTweetLikedByMe = await friendshipClass.isTweetLikedByMe(whereData)
+            const isTweetLikedByMe = await friendshipClass.isTweetLikedByMe(reqUserid, tweetid)
             if(isTweetLikedByMe.success == false){
                 
                 dataItems["isTweetLikedByMe"] = false
@@ -257,38 +161,24 @@ exports.friendsTweet = async(req, res) => {
             }
         }
     }
-    res.send(utils.sendResponse(true, friendTweets, ""))
+    return utils.sendResponse(res, true, friendTweets, "")
 }
 
-
+/**
+ * Gets all friend request that user can accept or reject
+ * @param {Object} req 
+ * @param {Object} res 
+ * @returns 
+ */
 exports.allFriendRequest = async(req, res) => {
     let reqUserid = parseInt(req.body.userid)
     if(!reqUserid){
-        return res.send(utils.sendResponse(false, "", TEXT.noUserId))
+        return utils.sendResponse(res, false, {}, TEXT.noUserId)
     }
-    let whereData = {
-        [Op.and]: [
-            {
-                [Op.or]: [
-                    { user1_id: reqUserid },
-                    { user2_id: reqUserid }
-                ]
-            },
-            {
-                [Op.and]:[
-                    { status: constant.pendingStatus },
-                    { action_uid : {
-                        [Op.ne]:reqUserid
-                    } }
-                ]
-                
-            }
-        ]
-    }
-    const friendListResponse = await friendshipClass.friendsList(whereData)
+    const friendListResponse = await friendshipClass.allFriendsRequestList(reqUserid)
     const friendList = friendListResponse.data
     if(friendList.length == 0) {
-        return res.send(utils.sendResponse(false, "", TEXT.noFriends))
+        return utils.sendResponse(res, false, {}, TEXT.noFriends)
     }
     let friendListArr = []
     for (const dataItems of friendList) {
@@ -299,9 +189,6 @@ exports.allFriendRequest = async(req, res) => {
             friendListArr.push(dataItems.user2_id)
         }
     }
-    let whereDataFriends = {
-        id: friendListArr
-    }
-    const allFriendRequestResponse = await friendshipClass.allFriends(whereDataFriends)
-    res.send(utils.sendResponse(true, allFriendRequestResponse.data, ""))
+    const allFriendRequestResponse = await friendshipClass.allFriends(friendListArr)
+    return utils.sendResponse(res, true, allFriendRequestResponse.data, "")
 }

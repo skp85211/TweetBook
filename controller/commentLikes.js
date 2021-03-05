@@ -1,8 +1,8 @@
-const userdb = require("../model/User")
 const commentLikesClass = require("../classes/CommentLikes/CommentLikes")
 const utils = require("../utils")
 const { ERRORS } = require("../errorConstants")
 const TEXT = require("../text").TEXT
+
 
 /**
  * Entry for one like, creates a comment like entry and likes a comment
@@ -11,28 +11,17 @@ const TEXT = require("../text").TEXT
  */
 exports.createLike = async (req, res) => {
     let reqUserId = parseInt(req.body.userid)
-    let reqCommentId = parseInt(req.params.commentid)
+    let reqcommentId = parseInt(req.params.commentid)
     let reqLikeType = req.params.likeType.toString()
-    if(!reqUserId || !reqCommentId || !reqLikeType){
-        return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
+    if(!reqUserId || !reqcommentId || !reqLikeType){
+        return utils.sendResponse(res, false, {}, TEXT.someFieldsMissing)
     }
-    let createData = {
-        user_id : reqUserId,
-        entity_type : TEXT.entityComment,
-        entity_id : reqCommentId,
-        like_type : reqLikeType
-    }
-    let whereData = {
-        user_id : reqUserId,
-        entity_type : TEXT.entityComment,
-        entity_id : reqCommentId
-    }
-    const isalreadyLiked = await commentLikesClass.readLike(whereData)
+    const isalreadyLiked = await commentLikesClass.readLike(reqUserId, reqcommentId)
     if(isalreadyLiked.success == false){
-        const commentLikes = await commentLikesClass.createLike(createData)
-        res.send(utils.sendResponse(true, commentLikes.data, ""))
+        const commentLikes = await commentLikesClass.createLike(reqUserId, reqcommentId, reqLikeType)
+        return utils.sendResponse(res, true, commentLikes.data, "")
     }
-    res.send(utils.sendResponse(false, "", ERRORS.alreadyLiked))
+    return utils.sendResponse(res, false, {}, "")
 }
 
 /**
@@ -42,20 +31,15 @@ exports.createLike = async (req, res) => {
  */
 exports.readLike = async (req, res) => {
     let reqUserId = parseInt(req.body.userid)
-    let reqCommentId = parseInt(req.params.commentid)
-    if(!reqUserId || !reqCommentId){
-        return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
+    let reqcommentId = parseInt(req.params.commentid)
+    if(!reqUserId || !reqcommentId){
+        return utils.sendResponse(res, false, {}, TEXT.someFieldsMissing)
     }
-    let whereData = {
-        user_id : reqUserId,
-        entity_type : TEXT.entityComment,
-        entity_id : reqCommentId
-    }
-    const readcomment = await commentLikesClass.readLike(whereData)
+    const readcomment = await commentLikesClass.readLike(reqUserId, reqcommentId)
     if(readcomment.success == false){
-        res.send(utils.sendResponse(false, "", ERRORS.noLikeByUser))
+        return utils.sendResponse(res, false, {}, ERRORS.noLikeByUser)
     }
-    res.send(utils.sendResponse(true, readcomment.data, ""))
+    return utils.sendResponse(res, true, readcomment.data, "")
 }
 
 /**
@@ -65,17 +49,12 @@ exports.readLike = async (req, res) => {
  */
 exports.deleteLike = async (req, res) => {
     let reqUserId = parseInt(req.body.userid)
-    let reqCommentId = parseInt(req.params.commentid)
-    if(!reqUserId || !reqCommentId){
-        return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
+    let reqcommentId = parseInt(req.params.commentid)
+    if(!reqUserId || !reqcommentId){
+        return utils.sendResponse(res, false, {}, TEXT.someFieldsMissing)
     }
-    let whereData = {
-        user_id : reqUserId,
-        entity_type : TEXT.entityComment,
-        entity_id : reqCommentId
-    }
-    const deleteLike = await commentLikesClass.deleteLike(whereData)
-    res.send(utils.sendResponse(true, deleteLike.data, ""))
+    const deleteLike = await commentLikesClass.deleteLike(reqUserId, reqcommentId)
+    return utils.sendResponse(res, true, deleteLike.data, "")
 }
 
 /**
@@ -84,20 +63,10 @@ exports.deleteLike = async (req, res) => {
  * @param {Object} res 
  */
 exports.whoAllLikedcomment = async (req, res) => {
-    let reqCommentId = parseInt(req.params.commentid)
-    if(!reqCommentId){
-        return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
+    let reqcommentId = parseInt(req.params.commentid)
+    if(!reqcommentId){
+        return utils.sendResponse(res, false, {}, TEXT.someFieldsMissing)
     }
-    let whereData = {
-        entity_type : TEXT.entityComment,
-        entity_id : reqCommentId
-    }
-    let includeData = [
-        {
-            model : userdb, as : "user",
-            attributes:['id', 'name']
-        }
-    ]
-    const whoAllLikedcomment = await commentLikesClass.whoAllLikedcomment(whereData, includeData)
-    res.send(utils.sendResponse(true, whoAllLikedcomment.data, ""))
+    const whoAllLikedcomment = await commentLikesClass.whoAllLikedcomment(reqcommentId)
+    return utils.sendResponse(res, true, whoAllLikedcomment.data, "")
 }

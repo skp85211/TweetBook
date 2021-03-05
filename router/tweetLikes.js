@@ -13,6 +13,6 @@ Router.get("/read/userid/:userid/tweetid/:tweetid", jwtAuth.authenticateToken,tw
 Router.get("/delete/userid/:userid/tweetid/:tweetid", jwtAuth.authenticateToken,tweetLikesFunc.deleteLike)
 
 //All user list who liked the tweet
-Router.get("/all/users/tweetid/:tweetid", jwtAuth.authenticateToken,tweetLikesFunc.whoAllLikedTweet)
+Router.get("/all/users/tweetid/:tweetid", tweetLikesFunc.whoAllLikedTweet)
 
 module.exports = Router

@@ -1,11 +1,9 @@
-const tweetdb = require("../model/Tweets")
 const friendshipClass = require("../classes/Friendship/Friendship")
 const userClass = require("../classes/User/User")
-const { Op } = require("sequelize")
 const TEXT = require("../text").TEXT
 const utils = require("../utils");
 const userFunction = require("../classes//User/Function")
-const { ERRORS } = require('../errorConstants');
+const ERRORS = require('../errorConstants').ERRORS
 const constantFile = require("../classes/User/Constant")
 const jwtauth = require("../jwtAuth")
 
@@ -20,39 +18,14 @@ exports.searchUser = async (req, res) => {
     let reqUserid = parseInt(req.body.userid)
     let errors = userFunction.emptySearchField(reqEmailorName, reqUserid)
     if (errors.length) {
-        return res.send(utils.sendResponse(false, "", errors.join(",")))
+        return utils.sendResponse(res,false, {}, errors.join(","))
     }
     try {
-        // let whereData = {
-        //     email: reqEmail
-        // }
-        let whereData = {
-            [Op.and]: [
-                {
-                    [Op.or]: [
-                        {
-                            name: {
-                                [Op.iLike]: '%' + reqEmailorName + '%'
-                            }
-                        },
-                        {
-                            email: reqEmailorName
-                        }
-                    ]
-                },
-                {
-                    id: {
-                        [Op.ne]: reqUserid
-                    }
-                }
-            ]
-        }
-        const userSearchResponse = await userClass.searchUser(whereData)
-        const userSearchArray = userSearchResponse.data
-        // console.log(userSearch)
+        let userSearchResponse = await userClass.searchUser(reqUserid, reqEmailorName)
+        let userSearchArray = userSearchResponse.data
         if (userSearchArray.length == 0) {
             let data = { relationStatus: false }
-            res.send(utils.sendResponse(false, data, TEXT.noUser))
+            return utils.sendResponse(res,false, data, TEXT.noUser)
         }
         for (const userSearch of userSearchArray) {
             console.log(userSearch.name)
@@ -66,11 +39,7 @@ exports.searchUser = async (req, res) => {
                 userid1 = userid2
                 userid2 = temp
             }
-            let whereDataRelation = {
-                user1_id: userid1,
-                user2_id: userid2
-            }
-            const userRelationSearchResponse = await friendshipClass.friendshipCheck(whereDataRelation)
+            const userRelationSearchResponse = await friendshipClass.friendshipCheck(userid1, userid2)
             const userRelationSearch = userRelationSearchResponse.data
             if (userRelationSearch.length == 0) {
                 userSearch["friends"] = {
@@ -92,9 +61,9 @@ exports.searchUser = async (req, res) => {
                 }
             }
         }
-        res.send(utils.sendResponse(true, userSearchArray, ""))
+        return utils.sendResponse(res,true, userSearchArray, "")
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error));
+        return utils.sendResponse(res,false, {}, error)
     }
 }
 
@@ -113,24 +82,13 @@ exports.usersAllTweets = async (req, res) => {
         let userid = parseInt(req.body.userid)
         let errors = userFunction.emptyusersAllTweets(pageno, pageSize, userid)
         if (errors.length) {
-            return res.send(utils.sendResponse(false, "", errors.join(",")))
+            return utils.sendResponse(res,false, {}, errors.join(","))
         }
-        let whereData = {
-            id: userid
-        }
-        let includeData = [
-            {
-                model: tweetdb, as: "tweets",
-                offset: offsetValue,
-                limit: pageSize
-            }
-        ]
-
-        const rowsRecordResponse = await userClass.usersTweet(whereData, includeData)
+        const rowsRecordResponse = await userClass.usersTweet(userid, offsetValue, pageSize)
         const rowsRecord = rowsRecordResponse.data
-        res.send(utils.sendResponse(true, rowsRecord, ""))
+        return utils.sendResponse(res,true, rowsRecord, "")
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
 }
 
@@ -144,9 +102,9 @@ exports.allUsersAllTweets = async (req, res) => {
     try {
         const allUsersAllTweetsResponse = await userClass.allUsersAllTweets(includeData)
         const allUsersAllTweets = allUsersAllTweetsResponse.data
-        res.send(utils.sendResponse(true, allUsersAllTweets, ""))
+        return utils.sendResponse(res,true, allUsersAllTweets, "")
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res,false, {}, error)
     }
 }
 
@@ -162,22 +120,19 @@ exports.emailVerification = async (req, res) => {
         errors.push(TEXT.noEmail)
     }
     if (errors.length) {
-        return res.send(utils.sendResponse(false, "", errors.join(",")))
-    }
-    let whereData = {
-        email: reqEmail
+        return utils.sendResponse(res, false, {}, errors.join(","))
     }
     try {
-        let loginEmailResponse = await userClass.searchUser(whereData)
+        let loginEmailResponse = await userClass.searchUserwithEmail(reqEmail)
         let loginEmail = loginEmailResponse.data
         if (loginEmail.length == 0) {
-            res.send(utils.sendResponse(false, "", TEXT.noUserExists))
+            return utils.sendResponse(res, false, {}, TEXT.noUserExists)
         }
         else {
-            res.send(utils.sendResponse(true, "", ""))
+            return utils.sendResponse(res, true, {}, "")
         }
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
 }
 
@@ -191,35 +146,30 @@ exports.loginPasswordAuth = async (req, res) => {
     let reqPassword = req.body.password.toString()
     let errors = userFunction.emptyLoginField(reqEmail, reqPassword)
     if (errors.length) {
-        return res.send(utils.sendResponse(false, "", errors.join(",")))
+        return utils.sendResponse(res, false, {}, errors.join(","))
     }
     try {
-        let whereData = {
-            email: reqEmail
-        }
-        let loginResponse = await userClass.searchUser(whereData)
+        let loginResponse = await userClass.searchUserwithEmail(reqEmail)
         let login = loginResponse.data[0]
         if (login.length == 0) {
-            res.send(utils.sendResponse(false, "", TEXT.noUserExists))
+            return utils.sendResponse(res, false, {}, TEXT.noUserExists)
         }
         if (login.password != reqPassword) {
-            res.send(utils.sendResponse(false, "", ERRORS.noPasswordMatch))
+            return utils.sendResponse(res, false, {}, ERRORS.noPasswordMatch)
         }
         else {
             console.log(login.id, "id")
             const accessToken = jwtauth.generateAccessToken(login.id)
-            // const auth = jwtauth.authenticateToken(accessToken)
-            // console.log(auth, "Auth")
             let data = {
                 userId: login.id,
                 name: login.name,
                 email: login.email,
                 token : accessToken
             }
-            res.send(utils.sendResponse(true, data, ""))
+            return utils.sendResponse(res, true, data, "")
         }
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
 }
 
@@ -234,18 +184,13 @@ exports.signupUser = async (req, res) => {
     let reqPassword = req.body.password.toString()
     let errors = userFunction.emptySignupField(reqName, reqEmail, reqPassword)
     if (errors.length) {
-        return res.send(utils.sendResponse(false, "", errors.join(",")))
-    }
-    let createData = {
-        name: reqName,
-        email: reqEmail,
-        password: reqPassword
+        return utils.sendResponse(res, false, {}, errors.join(","))
     }
     try {
-        let signupResponse = await userClass.signupUser(createData)
-        res.send(utils.sendResponse(true, "", ""))
+        let signupResponse = await userClass.signupUser(reqName, reqEmail, reqPassword)
+        return utils.sendResponse(res, true, {}, "")
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
 }
 
@@ -258,7 +203,7 @@ exports.updateNamePassword = async (req, res) => {
     //updating Name
     let reqType = parseInt(req.params.type)
     if (!reqType) {
-        return res.send(utils.sendResponse(false, "", TEXT.noUpdateType))
+        return utils.sendResponse(res, false, {}, TEXT.noUpdateType)
     }
     if (req.params.type == constantFile.updateTypeName) {
         let reqUserid = parseInt(req.body.userid)
@@ -266,28 +211,21 @@ exports.updateNamePassword = async (req, res) => {
         let reqPassword = req.body.password.toString()
         let errors = userFunction.emptyUpdateName(reqUserid, reqName, reqPassword)
         if (errors.length) {
-            return res.send(utils.sendResponse(false, "", errors.join(",")))
+            return utils.sendResponse(res, false, {}, errors.join(","))
         }
 
         try {
-            let whereData = {
-                id: reqUserid
-            }
-            let loginResponse = await userClass.searchUser(whereData)
+            let loginResponse = await userClass.searchUserwithId(reqUserid)
             let login = loginResponse.data[0]
             if (login.password != reqPassword) {
-                res.send(utils.sendResponse(false, "", ERRORS.noPasswordMatch))
+                return utils.sendResponse(res, false, {}, ERRORS.noPasswordMatch)
             }
             else {
-                let updateData = { name: reqName }
-                let whereData = {
-                    id: reqUserid
-                }
-                const updateName = await userClass.updateNamePassword(updateData, whereData)
-                res.send(utils.sendResponse(true, "", ""))
+                const updateName = await userClass.updateName(reqName, reqUserid)
+                return utils.sendResponse(res, true, {}, "")
             }
         } catch (error) {
-            res.send(utils.sendResponse(false, "", error));
+            return utils.sendResponse(res, false, {}, error)
         }
     }
     //updating password
@@ -297,28 +235,20 @@ exports.updateNamePassword = async (req, res) => {
         let reqNewPassword = req.body.newpassword.toString()
         let errors = userFunction.emptyUpdatePassword(reqUserid, reqPassword, reqNewPassword)
         if (errors.length) {
-            return res.send(utils.sendResponse(false, "", errors.join(",")))
+            return utils.sendResponse(res, false, {}, errors.join(","))
         }
         try {
-            let whereData = {
-                id: reqUserid
-            }
-            let loginResponse = await userClass.searchUser(whereData)
+            let loginResponse = await userClass.searchUserwithId(reqUserid)
             let login = loginResponse.data[0]
             if (login.password != reqPassword) {
-                res.send(utils.sendResponse(false, "", ERRORS.noPasswordMatch))
+                return utils.sendResponse(res, false, {}, ERRORS.noPasswordMatch)
             }
             else {
-                let whereData = {
-                    id: reqUserid
-                }
-                let updateData = { password: reqNewPassword }
-
-                const updatePasswordResponse = await userClass.updateNamePassword(updateData, whereData)
-                res.send(utils.sendResponse(true, "", ""))
+                const updatePasswordResponse = await userClass.updatePassword(reqNewPassword, reqUserid)
+                return utils.sendResponse(res, true, {}, "")
             }
         } catch (error) {
-            res.send(utils.sendResponse(false, "", error));
+            return utils.sendResponse(res, false, {}, error)
         }
     }
 }

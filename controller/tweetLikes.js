@@ -1,4 +1,3 @@
-const userdb = require("../model/User")
 const tweetLikesClass = require("../classes/TweetLikes/TweetLikes")
 const utils = require("../utils")
 const { ERRORS } = require("../errorConstants")
@@ -14,25 +13,14 @@ exports.createLike = async (req, res) => {
     let reqTweetId = parseInt(req.params.tweetid)
     let reqLikeType = req.params.likeType.toString()
     if(!reqUserId || !reqTweetId || !reqLikeType){
-        return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
+        return utils.sendResponse(res, false, {}, TEXT.someFieldsMissing)
     }
-    let createData = {
-        user_id : reqUserId,
-        entity_type : TEXT.entityTweet,
-        entity_id : reqTweetId,
-        like_type : reqLikeType
-    }
-    let whereData = {
-        user_id : reqUserId,
-        entity_type : TEXT.entityTweet,
-        entity_id : reqTweetId
-    }
-    const isalreadyLiked = await tweetLikesClass.readLike(whereData)
+    const isalreadyLiked = await tweetLikesClass.readLike(reqUserId, reqTweetId)
     if(isalreadyLiked.success == false){
-        const tweetLikes = await tweetLikesClass.createLike(createData)
-        res.send(utils.sendResponse(true, tweetLikes.data, ""))
+        const tweetLikes = await tweetLikesClass.createLike(reqUserId, reqTweetId, reqLikeType)
+        return utils.sendResponse(res, true, tweetLikes.data, "")
     }
-    res.send(utils.sendResponse(false, "", ""))
+    return utils.sendResponse(res, false, {}, "")
 }
 
 /**
@@ -44,18 +32,13 @@ exports.readLike = async (req, res) => {
     let reqUserId = parseInt(req.body.userid)
     let reqTweetId = parseInt(req.params.tweetid)
     if(!reqUserId || !reqTweetId){
-        return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
+        return utils.sendResponse(res, false, {}, TEXT.someFieldsMissing)
     }
-    let whereData = {
-        user_id : reqUserId,
-        entity_type : TEXT.entityTweet,
-        entity_id :reqTweetId
-    }
-    const readTweet = await tweetLikesClass.readLike(whereData)
+    const readTweet = await tweetLikesClass.readLike(reqUserId, reqTweetId)
     if(readTweet.success == false){
-        res.send(utils.sendResponse(false, "", ERRORS.noLikeByUser))
+        return utils.sendResponse(res, false, {}, ERRORS.noLikeByUser)
     }
-    res.send(utils.sendResponse(true, readTweet.data, ""))
+    return utils.sendResponse(res, true, readTweet.data, "")
 }
 
 /**
@@ -67,15 +50,10 @@ exports.deleteLike = async (req, res) => {
     let reqUserId = parseInt(req.body.userid)
     let reqTweetId = parseInt(req.params.tweetid)
     if(!reqUserId || !reqTweetId){
-        return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
+        return utils.sendResponse(res, false, {}, TEXT.someFieldsMissing)
     }
-    let whereData = {
-        user_id : reqUserId,
-        entity_type : TEXT.entityTweet,
-        entity_id : reqTweetId
-    }
-    const deleteLike = await tweetLikesClass.deleteLike(whereData)
-    res.send(utils.sendResponse(true, deleteLike.data, ""))
+    const deleteLike = await tweetLikesClass.deleteLike(reqUserId, reqTweetId)
+    return utils.sendResponse(res, true, deleteLike.data, "")
 }
 
 /**
@@ -86,18 +64,8 @@ exports.deleteLike = async (req, res) => {
 exports.whoAllLikedTweet = async (req, res) => {
     let reqTweetId = parseInt(req.params.tweetid)
     if(!reqTweetId){
-        return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
+        return utils.sendResponse(res, false, {}, TEXT.someFieldsMissing)
     }
-    let whereData = {
-        entity_type : TEXT.entityTweet,
-        entity_id : reqTweetId
-    }
-    let includeData = [
-        {
-            model : userdb, as : "user",
-            attributes:['id', 'name']
-        }
-    ]
-    const whoAllLikedTweet = await tweetLikesClass.whoAllLikedTweet(whereData, includeData)
-    res.send(utils.sendResponse(true, whoAllLikedTweet.data, ""))
+    const whoAllLikedTweet = await tweetLikesClass.whoAllLikedTweet(reqTweetId)
+    return utils.sendResponse(res, true, whoAllLikedTweet.data, "")
 }

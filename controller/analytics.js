@@ -1,4 +1,4 @@
-const { sendResponse } = require("../utils")
+const utils = require("../utils")
 
 /**
  * get all analytics 
@@ -7,5 +7,5 @@ const { sendResponse } = require("../utils")
  */
 exports.analytics = async(req, res) => {
     console.log(req.body.analyticsObject, "All analytics details")
-    return res.send(sendResponse(true, "", ""))
+    return utils.sendResponse(res,true, {}, "")
 }

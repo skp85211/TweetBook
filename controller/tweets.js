@@ -1,9 +1,6 @@
-const commentdb  = require("../model/Comments")
-const userdb = require("../model/User")
 const tweetClass = require("../classes/Tweets/Tweets")
 const CommentClass = require("../classes/Comment/Comment")
 const constant = require("../classes/Tweets/constant")
-const { Op } = require("sequelize")
 const utils = require("../utils")
 const TEXT = require("../text").TEXT
 const tweetFunction = require("../classes/Tweets/Function")
@@ -21,27 +18,12 @@ exports.allLatestTweets = async(req, res) => {
         let offsetValue = (pageno*pageSize);
         let reqUserid = parseInt(req.body.userid)
         if (!reqUserid) {
-            return res.send(utils.sendResponse(false, "", TEXT.noUserId))
+            return utils.sendResponse(res, false, {}, TEXT.noUserId)
         }
-        let whereData = {
-            uid:{
-                [Op.ne] : reqUserid
-            }
-        }
-        let includeData = [
-            {
-                model:userdb, as:"user",
-                attributes:['id', 'name']
-            }
-        ]
-        let orderData = [
-            ['createdAt', 'DESC']
-        ]
-        const rowsRecordResponse = await tweetClass.allLatestTweets(whereData, includeData, orderData, offsetValue)
-        const rowsRecord = rowsRecordResponse.data
-        res.send(utils.sendResponse(true, rowsRecord, ""))
+        const rowsRecord = await tweetClass.allLatestTweets(reqUserid, offsetValue)
+        return utils.sendResponse(res, true, rowsRecord.data, "")
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
 }
 
@@ -56,29 +38,22 @@ exports.createTweet = async(req, res) => {
     let reqTweet = req.body.tweet.toString()
     let errors = tweetFunction.emptyFieldCreateTweet(reqUserid, reqTweet)
     if(errors.length){
-        return res.send(utils.sendResponse(false, "", errors.join(",")))
+        return utils.sendResponse(res, false, {}, errors.join(","))
     }
     try {
-        let attr = ['id']
-        let whereData = {
-            id:reqUserid
-        }
-        const useridCheckResponse = await CommentClass.checkUserIdExists(attr, whereData)
-        const useridCheck = useridCheckResponse.data
-        if(useridCheck.length == 0){
-            res.send(utils.sendResponse(false, "" ,TEXT.noUserExists))
+        const useridCheckResponse = await CommentClass.checkUserIdExists(reqUserid)
+        if(useridCheckResponse.data.length == 0){
+            return utils.sendResponse(res, false, {} ,TEXT.noUserExists)
         }
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
 
     try {
-        let createData = {uid: reqUserid, tweet: reqTweet}
-        const newTweetResponse = await tweetClass.createTweet(createData)
-        const newTweet = newTweetResponse.data
-        res.send(utils.sendResponse(true, newTweet, ""))
+        const newTweetResponse = await tweetClass.createTweet(reqUserid, reqTweet)
+        return utils.sendResponse(res, true, newTweetResponse.data, "")
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
 }
 
@@ -91,20 +66,13 @@ exports.createTweet = async(req, res) => {
 exports.readTweet = async(req, res) => {
     let reqUserid = parseInt(req.body.userid)
     if(!reqUserid){
-        return res.send(utils.classResponse(false, "", TEXT.noUserId))
+        return utils.classResponse(false, {}, TEXT.noUserId)
     }
-    let whereData = {
-        uid:reqUserid
-    }
-    let orderData = [
-        ['createdAt', 'DESC']
-    ]
     try {
-        let tweetsResponse = await tweetClass.readTweet(whereData, orderData)
-        let tweets = tweetsResponse.data
-        res.send(utils.sendResponse(true, tweets, ""))
+        let tweetsResponse = await tweetClass.readTweet(reqUserid)
+        return utils.sendResponse(res, true, tweetsResponse.data, "")
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
 }
 
@@ -117,22 +85,16 @@ exports.readTweet = async(req, res) => {
 exports.updateTweet = async(req, res) => {
     let reqUserid = parseInt(req.body.userid)
     let reqId = parseInt(req.body.id)
-    let reqTweet = parseInt(req.body.tweet)
+    let reqTweet = req.body.tweet.toString()
     let errors = tweetFunction.emptyFieldUpdateTweet(reqId, reqUserid, reqTweet)
     if(errors.length){
-        return res.send(utils.sendResponse(false, "", errors.join(",")))
-    }
-    let updateData = {tweet : reqTweet}
-    let whereData = {
-        id: reqId,
-        uid: reqUserid
+        return utils.sendResponse(res, false, {}, errors.join(","))
     }
     try {
-        let updateTweetResponse = await tweetClass.updateTweet(updateData, whereData)
-        let updateTweet = updateTweetResponse.data
-        res.send(utils.sendResponse(true, updateTweet, ""))
+        let updateTweetResponse = await tweetClass.updateTweet(reqId, reqUserid, reqTweet)
+        return utils.sendResponse(res, true, updateTweetResponse.data, "")
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
 }
 
@@ -147,35 +109,14 @@ exports.allTweetCommentsWithUser = async(req, res) => {
         let pageno = parseInt(req.params.pageno);
         let tweetid = parseInt(req.params.tid)
         if(!pageno || !tweetid){
-            return res.send(utils.sendResponse(false, "", TEXT.noPageNo + TEXT.noTweetId))
+            return utils.sendResponse(res, false, {}, TEXT.noPageNo + TEXT.noTweetId)
         }
         pageno = pageno-1;
         const pageSize = constant.limitTweets;
         let offsetValue = (pageno*pageSize);
-        let whereData = {
-            id:{
-                [Op.eq] : tweetid
-            }
-        }
-        let includeData = [
-            {
-                model:commentdb, as:"comments",
-                include : [
-                    {
-                        model:userdb, as:"user",
-                        attributes:['id', 'name']
-                    }
-                ]
-            }
-        ]
-        let orderData = [
-            ['createdAt', 'DESC']
-        ]
-
-        const rowsRecordResponse = await tweetClass.allTweetCommentsWithUser(whereData, includeData, orderData, offsetValue)
-        const rowsRecord = rowsRecordResponse.data
-        res.send(utils.sendResponse(true, rowsRecord, ""))
+        const rowsRecordResponse = await tweetClass.allTweetCommentsWithUser(tweetid, offsetValue)
+        return utils.sendResponse(res, true, rowsRecordResponse.data, "")
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
 }

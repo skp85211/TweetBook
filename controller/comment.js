@@ -1,10 +1,7 @@
-const { Op } = require('sequelize')
-const userdb = require("../model/User")
 const utils = require("../utils")
 const TEXT = require("../text").TEXT
 const CommentClass = require("../classes/Comment/Comment");
 const { emptyFieldCreateComment } = require('../classes/Comment/Function');
-const likes = require('../model/Likes')
 const commentLikesClass = require("../classes/CommentLikes/CommentLikes")
 const friendshipClassFunc = require("../classes/Friendship/Function")
 
@@ -20,39 +17,33 @@ exports.createComment = async(req, res) => {
     let reqComment = req.body.comment.toString()
     let errors = emptyFieldCreateComment(reqTweetid, reqUserid, reqComment);
     if (errors.length) {
-        return res.send(utils.sendResponse(false, "", errors.join(",")))
+        return utils.sendResponse(res, false, {}, errors.join(","))
     }
     //tweet id verification
     try {
-        let whereData = { id : reqTweetid}
-        let attr = ['id']
-        const tidCheckResponse = await CommentClass.checkTweetIdExists(attr, whereData)
+        const tidCheckResponse = await CommentClass.checkTweetIdExists(reqTweetid)
         const tidCheck = tidCheckResponse.data
         if(tidCheck.length == 0){
-            res.send(utils.sendResponse(false, "", TEXT.noTweetExist))
+            return utils.sendResponse(res, false, {}, TEXT.noTweetExist)
     }
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
     //user id verification
     try {
-        let attr = ['id']
-        let whereData = {id : reqUserid}
-        const uidCheckResponse = await CommentClass.checkUserIdExists(attr, whereData)
-        const uidCheck = uidCheckResponse.data
-        if(uidCheck.length == 0){
-            res.send(utils.sendResponse(false, "", TEXT.noUserExists))
+        let uidCheckResponse = await CommentClass.checkUserIdExists(reqUserid)
+        if(uidCheckResponse.data.length == 0){
+            return utils.sendResponse(res, false, {}, TEXT.noUserExists)
     }
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
     
     try {
         const newCommentResponse = await CommentClass.createComment(req.body.tid, req.body.userid, req.body.comment)
-        const newComment = newCommentResponse.data
-        res.send(utils.sendResponse(true, newComment, ""))
+        return utils.sendResponse(res, true, newCommentResponse.data, "")
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
 }
 
@@ -66,15 +57,12 @@ exports.readComment = async(req, res) => {
     try {
         let reqTweetid = parseInt(req.body.tid)
         if(!reqTweetid){
-            return res.send(utils.sendResponse(false, "", TEXT.noTweetId))
+            return utils.sendResponse(res, false, {}, TEXT.noTweetId)
         }
-        let whereData = {tid : reqTweetid}
-        let orderData = ['createdAt', 'DESC']
-        const commentsResponse = await CommentClass.readComment(whereData, orderData)
-        const comments = commentsResponse.data
-        res.send(utils.sendResponse(true, comments, ""))
+        const commentsResponse = await CommentClass.readComment(reqTweetid)
+        return utils.sendResponse(res, true, commentsResponse.data, "")
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
 }
 
@@ -91,21 +79,12 @@ exports.updateComment = async(req, res) => {
         let reqUserid = parseInt(req.body.userid)
         let reqComment = req.body.comment.toString()
         if(!reqId || !reqTweetid || !reqUserid || !reqComment){
-            return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
+            return utils.sendResponse(res, false, {}, TEXT.someFieldsMissing)
         }
-        let updateData = {comment : reqComment}
-        let whereData = {
-            [Op.and] : [
-                {id:reqId},
-                {tid:reqTweetid},
-                {uid: reqUserid}
-            ]
-        }
-        const updateCommentResponse = await CommentClass.updateComment(updateData, whereData)
-        const updateComment = updateCommentResponse.data
-        res.send(utils.sendResponse(true, updateComment, ""))
+        const updateCommentResponse = await CommentClass.updateComment(reqId, reqTweetid, reqUserid, reqComment)
+        return utils.sendResponse(res, true, updateCommentResponse.data, "")
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
 }
 
@@ -120,18 +99,12 @@ exports.deleteComment = async(req, res) => {
         let reqTweetid = parseInt(req.body.tid)
         let reqUserid = parseInt(req.body.userid)
         if(!reqId || !reqTweetid || !reqUserid){
-            return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
+            return utils.sendResponse(res, false, {}, TEXT.someFieldsMissing)
         }
-        let whereData = {
-            id: reqId,
-            tid:reqTweetid,
-            uid: reqUserid
-        }
-        const deleteCommentResponse = await CommentClass.deleteComment(whereData)
-        const deleteComment = deleteCommentResponse.data
-        res.send(utils.sendResponse(true, deleteComment, ""))
+        const deleteCommentResponse = await CommentClass.deleteComment(reqId, reqTweetid, reqUserid)
+        return utils.sendResponse(res, true, deleteCommentResponse.data, "")
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
 }
 
@@ -145,9 +118,9 @@ exports.deleteComment = async(req, res) => {
 exports.allInComments = async(req, res) => {
     try {
         const allComments = await CommentClass.allInComment()
-        res.send(utils.sendResponse(true, allComments.data, ""))
+        return utils.sendResponse(res, true, allComments.data, "")
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
 }
 
@@ -163,28 +136,13 @@ exports.commentsUnderTweets = async(req, res) => {
         let reqTweetid = parseInt(req.params.tweetid)
         let reqUserid = parseInt(req.body.userid)
         if(!pageno || !reqTweetid || !reqUserid){
-            return res.send(utils.sendResponse(false, "", TEXT.someFieldsMissing))
+            return utils.sendResponse(res, false, {}, TEXT.someFieldsMissing)
         }
         pageno = pageno-1;
         let pageSize = 5;
         let offsetValue = (pageno*pageSize);
 
-        let whereData = {
-            tid:reqTweetid
-        }
-        let includeData = [
-            {
-                model:userdb, as:"user",
-                attributes:['id','name']
-            },
-            {
-                model : likes, as:"likes"
-            }
-        ]
-        let orderData = [
-            ['createdAt', 'DESC']
-        ]
-        const recordRowsResponse = await CommentClass.commentsUnderTweetsdb(whereData, includeData, orderData, offsetValue)
+        const recordRowsResponse = await CommentClass.commentsUnderTweetsdb(reqTweetid, offsetValue)
         const recordRows = recordRowsResponse.data
         for(const dataItems of recordRows){
             dataItems["commentLikesCount"] = friendshipClassFunc.countDiffLikes(dataItems.likes)
@@ -193,12 +151,7 @@ exports.commentsUnderTweets = async(req, res) => {
             }
             else{
                 let commentid = dataItems.id
-                let whereData = {
-                    user_id : reqUserid,
-                    entity_type : TEXT.entityComment,
-                    entity_id : commentid
-                }
-                const isCommentLikedByMe = await commentLikesClass.isCommentLikedByMe(whereData)
+                const isCommentLikedByMe = await commentLikesClass.isCommentLikedByMe(reqUserid, commentid)
                 if(isCommentLikedByMe.success == false){
                     
                     dataItems["isCommentLikedByMe"] = false
@@ -209,8 +162,8 @@ exports.commentsUnderTweets = async(req, res) => {
                 }
             }
         }
-        res.send(utils.sendResponse(true, recordRows, ""))
+        return utils.sendResponse(res, true, recordRows, "")
     } catch (error) {
-        res.send(utils.sendResponse(false, "", error))
+        return utils.sendResponse(res, false, {}, error)
     }
 }

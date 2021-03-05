@@ -1,5 +1,5 @@
 /**
- * Sends response from class function to controller
+ * Sends response
  * @param {Boolean} success 
  * @param {Object} data 
  * @param {String} err 
@@ -14,18 +14,18 @@ exports.classResponse = (success, data, err) => {
 }
 
 /**
- * Sends response to request from controller
+ * Sends response to request 
  * @param {Boolena} success 
  * @param {Object} data 
  * @param {String} err 
  */
-exports.sendResponse = (success, data, err) => {
-    let response = JSON.stringify({
+exports.sendResponse = (res, success, data, err) => {
+    return res.send(JSON.stringify({
         "success": success,
         "data": data,
         "error": err
     })
-    return response
+    )
 }
 
 /**
