@@ -1,17 +1,17 @@
-const { initialCount } = require("./constant")
+const Constant = require("./constant")
 const TEXT = require("../../text").TEXT
 
 /**
  * Takes All types of likes details and count different types of likes and return object of all types of likes with it's comment
  * @param {Array} likesArray 
  */
-exports.countDiffLikes = (likesArray) => {
+const countDiffLikes = (likesArray) => {
     let likeCountObject = {
-        likeTypeLikeCount : initialCount,
-        likeTypeLoveCount : initialCount,
-        likeTypeHappyCount : initialCount,
-        likeTypeSadCount : initialCount,
-        likeTypeCuriousCount : initialCount
+        likeTypeLikeCount : Constant.initialCount,
+        likeTypeLoveCount : Constant.initialCount,
+        likeTypeHappyCount : Constant.initialCount,
+        likeTypeSadCount : Constant.initialCount,
+        likeTypeCuriousCount : Constant.initialCount
     }
     for(dataItems of likesArray){
         switch(dataItems.like_type){
@@ -34,3 +34,5 @@ exports.countDiffLikes = (likesArray) => {
     }
     return likeCountObject;
 }
+
+module.exports = { countDiffLikes }

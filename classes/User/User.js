@@ -1,12 +1,17 @@
-const userdb = require("../../model/User")
-const utils = require("../../utils")
 const { Op } = require("sequelize")
-const tweetdb = require("../../model/Tweets")
+const User = require("../../model/User")
+const Tweets = require("../../model/Tweets")
+
+const utils = require("../../utils")
+
+
 /**
  * search user with given email/phone number if exists or not
- * @param {object} whereData 
+ * @param {Integer} reqUserid 
+ * @param {String} reqEmailorName 
+ * @returns 
  */
-exports.searchUser = async (reqUserid, reqEmailorName) => {
+const searchUser = async (reqUserid, reqEmailorName) => {
     let whereData = {
         [Op.and]: [
             {
@@ -28,7 +33,7 @@ exports.searchUser = async (reqUserid, reqEmailorName) => {
             }
         ]
     }
-    let userSearch = await userdb.findAll({
+    let userSearch = await User.findAll({
         where: whereData
     })
     return utils.classResponse(true, userSearch, "")
@@ -36,50 +41,56 @@ exports.searchUser = async (reqUserid, reqEmailorName) => {
 
 
 /**
- * search user with given email/phone number 
- * @param {object} whereData 
+ * search user with given email/phone number
+ * @param {String} reqEmail 
+ * @returns 
  */
-exports.searchUserwithEmail = async (reqEmail) => {
+const searchUserwithEmail = async (reqEmail) => {
     let whereData = {
         email: reqEmail
     }
-    let userSearch = await userdb.findAll({
+    let userSearch = await User.findAll({
         where: whereData
     })
     return utils.classResponse(true, userSearch, "")
 }
+
 
 /**
  * search user with given id number if exists or not
- * @param {object} whereData 
+ * @param {Integer} reqUserid 
+ * @returns 
  */
-exports.searchUserwithId = async (reqUserid) => {
+const searchUserwithId = async (reqUserid) => {
     let whereData = {
         id: reqUserid
     }
-    let userSearch = await userdb.findAll({
+    let userSearch = await User.findAll({
         where: whereData
     })
     return utils.classResponse(true, userSearch, "")
 }
 
+
 /**
  * Gets all tweets of one user with pagination
- * @param {object} whereData 
- * @param {Array} includeData 
+ * @param {Integer} userid 
+ * @param {Integer} offsetValue 
+ * @param {Integer} pageSize 
+ * @returns 
  */
-exports.usersTweet = async (userid, offsetValue, pageSize) => {
+const usersTweet = async (userid, offsetValue, pageSize) => {
     let whereData = {
         id: userid
     }
     let includeData = [
         {
-            model: tweetdb, as: "tweets",
+            model: Tweets, as: "tweets",
             offset: offsetValue,
             limit: pageSize
         }
     ]
-    const { count, rows } = await userdb.findAndCountAll({
+    let { count, rows } = await User.findAndCountAll({
         where: whereData,
         include: includeData
     })
@@ -88,55 +99,65 @@ exports.usersTweet = async (userid, offsetValue, pageSize) => {
 
 /**
  * Gets all users with all their tweets
- * @param {array} includeData 
+ * @returns
  */
-exports.allUsersAllTweets = async (includeData) => {
-    const allUsersAllTweets = await userdb.findAll({ include: includeData })
+const allUsersAllTweets = async () => {
+    let includeData = ["tweets"]
+    let allUsersAllTweets = await User.findAll({ include: includeData })
     return utils.classResponse(true, allUsersAllTweets, "")
 }
 
 /**
  * register and insert user details
- * @param {Object} createData 
+ * @param {String} reqName 
+ * @param {String} reqEmail 
+ * @param {String} reqPassword 
+ * @returns 
  */
-exports.signupUser = async (reqName, reqEmail, reqPassword) => {
+const signupUser = async (reqName, reqEmail, reqPassword) => {
     let createData = {
         name: reqName,
         email: reqEmail,
         password: reqPassword
     }
-    let signup = await userdb.create(createData)
+    let signup = await User.create(createData)
     return utils.classResponse(true, signup, "")
 }
 
+
 /**
  * update name of user
- * @param {Object} updateData 
- * @param {Object} whereData 
+ * @param {String} reqName 
+ * @param {Integer} reqUserid 
+ * @returns 
  */
-exports.updateName = async (reqName, reqUserid) => {
+const updateName = async (reqName, reqUserid) => {
     let updateData = { name: reqName }
     let whereData = {
         id: reqUserid
     }
-    const updatedData = await userdb.update(updateData, {
+    let updatedData = await User.update(updateData, {
         where: whereData
     })
     return utils.classResponse(true, updatedData, "")
 }
 
+
 /**
  * update  password of user
- * @param {Object} updateData 
- * @param {Object} whereData 
+ * @param {String} reqNewPassword 
+ * @param {Integer} reqUserid 
+ * @returns 
  */
-exports.updatePassword = async (reqNewPassword, reqUserid) => {
+const updatePassword = async (reqNewPassword, reqUserid) => {
     let updateData = { password: reqNewPassword }
     let whereData = {
         id: reqUserid
     }
-    const updatedData = await userdb.update(updateData, {
+    let updatedData = await User.update(updateData, {
         where: whereData
     })
     return utils.classResponse(true, updatedData, "")
 }
+
+module.exports = { searchUser, searchUserwithEmail, searchUserwithId, usersTweet, allUsersAllTweets, signupUser, updateName, updatePassword }

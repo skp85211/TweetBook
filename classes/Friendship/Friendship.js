@@ -1,11 +1,13 @@
-const tweetdb = require("../../model/Tweets")
-const friendshipdb = require("../../model/Friendship")
-const userdb = require("../../model/User")
+const { Op } = require("sequelize")
+
+const Tweets = require("../../model/Tweets")
+const Friendship = require("../../model/Friendship")
+const User = require("../../model/User")
+const Likes = require("../../model/Likes")
+
 const constant = require("./constant")
 const utils = require("../../utils")
-const likes = require("../../model/Likes")
 const TEXT = require("../../text").TEXT
-const { Op } = require("sequelize")
 
 /**
  * 
@@ -15,7 +17,7 @@ exports.allFriends = async(friendListArr) => {
     let whereData = {
         id: friendListArr
     }
-    const allFriends = await userdb.findAll({
+    let allFriends = await User.findAll({
         where : whereData,
         attributes : ['id', 'name', 'email']
     })
@@ -31,7 +33,7 @@ exports.friendshipCheck = async (userid1, userid2) => {
         user1_id: userid1,
         user2_id: userid2
     }
-    const userPair = await friendshipdb.findAll({
+    let userPair = await Friendship.findAll({
         where: whereData
     })
     return utils.classResponse(true, userPair, "")
@@ -48,7 +50,7 @@ exports.friendshipRequestSend = async (user1id, user2id, action_id) => {
         status: constant.pendingStatus,
         action_uid: action_id
     }
-    const friendRequest = await friendshipdb.create(whereDataCreate)
+    let friendRequest = await Friendship.create(whereDataCreate)
     return utils.classResponse(true, friendRequest, "")
 }
 
@@ -66,7 +68,7 @@ exports.friendRequestUpdate = async (acceptRejectStatus, action_id, user1id, use
         user1_id: user1id,
         user2_id: user2id
     }
-    const friendshipUpdate = await friendshipdb.update(updateData, {
+    let friendshipUpdate = await Friendship.update(updateData, {
         where: whereData
     })
     return utils.classResponse(true, friendshipUpdate, "")
@@ -90,7 +92,7 @@ exports.friendsList = async (reqUserid) => {
             }
         ]
     }
-    const friendList = await friendshipdb.findAll({
+    let friendList = await Friendship.findAll({
         where: whereData
     })
     return utils.classResponse(true, friendList, "")
@@ -121,7 +123,7 @@ exports.allFriendsRequestList = async (reqUserid) => {
             }
         ]
     }
-    const friendList = await friendshipdb.findAll({
+    let friendList = await Friendship.findAll({
         where: whereData
     })
     return utils.classResponse(true, friendList, "")
@@ -140,11 +142,11 @@ exports.friendsTweets = async (friendListArr, oset) => {
     }
     let includeDataFriends = [
         {
-            model: userdb, as: "user",
+            model: User, as: "user",
             attributes: ['id', 'name']
         },
         {
-            model: likes, as: "likes",
+            model: Likes, as: "likes",
             where:{
                 entity_type : TEXT.entityTweet
             },
@@ -154,7 +156,7 @@ exports.friendsTweets = async (friendListArr, oset) => {
     let orderDataFriends = [
         ['createdAt', 'DESC']
     ]
-    const friendTweets = await tweetdb.findAll({
+    let friendTweets = await Tweets.findAll({
         where: whereDataFriends,
         include: includeDataFriends,
         order: orderDataFriends,
@@ -174,7 +176,7 @@ exports.isTweetLikedByMe = async (reqUserid, tweetid) => {
         entity_type : TEXT.entityTweet,
         entity_id : tweetid
     }
-    const isTweetLikedByMe = await likes.findOne({
+    let isTweetLikedByMe = await Likes.findOne({
         where: whereData
     })
     if (isTweetLikedByMe == null) {
@@ -197,11 +199,11 @@ exports.allLatestTweets = async (reqUserid, oset) => {
     }
     let includeData = [
         {
-            model:userdb, as:"user",
+            model:User, as:"user",
             attributes:['id', 'name']
         },
         {
-            model: likes, as: "likes",
+            model: Likes, as: "likes",
             where:{
                 entity_type:TEXT.entityTweet
             },
@@ -211,7 +213,7 @@ exports.allLatestTweets = async (reqUserid, oset) => {
     let orderData = [
         ['createdAt', 'DESC']
     ]
-    const { count, rows } = await tweetdb.findAndCountAll({
+    let { count, rows } = await Tweets.findAndCountAll({
         where: whereData,
         include: includeData,
         order: orderData,

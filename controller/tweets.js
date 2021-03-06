@@ -1,26 +1,29 @@
-const tweetClass = require("../classes/Tweets/Tweets")
+const TweetClass = require("../classes/Tweets/Tweets")
 const CommentClass = require("../classes/Comment/Comment")
-const constant = require("../classes/Tweets/constant")
+
+const TweetFunction = require("../classes/Tweets/Function")
+const Constant = require("../classes/Tweets/Constant")
 const utils = require("../utils")
 const TEXT = require("../text").TEXT
-const tweetFunction = require("../classes/Tweets/Function")
+
 
 /**
  * for ALL tweets (latest tweet with pagination)
  * @param {object} req 
  * @param {object} res 
+ * @param {Object} next
  */
-exports.allLatestTweets = async(req, res) => {
+exports.allLatestTweets = async(req, res, next) => {
     try {
         let pageno = parseInt(req.params.pageno)
         pageno = pageno-1;
-        let pageSize = constant.limitTweets;
+        let pageSize = Constant.limitTweets;
         let offsetValue = (pageno*pageSize);
-        let reqUserid = parseInt(req.body.userid)
-        if (!reqUserid) {
+        let reqUserid = parseInt(req.userid)
+        if (!reqUserid || isNaN(reqUserid)) {
             return utils.sendResponse(res, false, {}, TEXT.noUserId)
         }
-        const rowsRecord = await tweetClass.allLatestTweets(reqUserid, offsetValue)
+        let rowsRecord = await TweetClass.allLatestTweets(reqUserid, offsetValue)
         return utils.sendResponse(res, true, rowsRecord.data, "")
     } catch (error) {
         return utils.sendResponse(res, false, {}, error)
@@ -32,16 +35,17 @@ exports.allLatestTweets = async(req, res) => {
  * create Tweet
  * @param {object} req 
  * @param {object} res 
+ * @param {Object} next
  */
-exports.createTweet = async(req, res) => {
-    let reqUserid = parseInt(req.body.userid)
-    let reqTweet = req.body.tweet.toString()
-    let errors = tweetFunction.emptyFieldCreateTweet(reqUserid, reqTweet)
+exports.createTweet = async(req, res, next) => {
+    let reqUserid = parseInt(req.userid)
+    let reqTweet = (req.body.tweet || "").toString()
+    let errors = TweetFunction.emptyFieldCreateTweet(reqUserid, reqTweet)
     if(errors.length){
         return utils.sendResponse(res, false, {}, errors.join(","))
     }
     try {
-        const useridCheckResponse = await CommentClass.checkUserIdExists(reqUserid)
+        let useridCheckResponse = await CommentClass.checkUserIdExists(reqUserid)
         if(useridCheckResponse.data.length == 0){
             return utils.sendResponse(res, false, {} ,TEXT.noUserExists)
         }
@@ -50,7 +54,7 @@ exports.createTweet = async(req, res) => {
     }
 
     try {
-        const newTweetResponse = await tweetClass.createTweet(reqUserid, reqTweet)
+        let newTweetResponse = await TweetClass.createTweet(reqUserid, reqTweet)
         return utils.sendResponse(res, true, newTweetResponse.data, "")
     } catch (error) {
         return utils.sendResponse(res, false, {}, error)
@@ -62,14 +66,15 @@ exports.createTweet = async(req, res) => {
  * read Tweet
  * @param {object} req 
  * @param {object} res 
+ * @param {Object} next
  */
-exports.readTweet = async(req, res) => {
-    let reqUserid = parseInt(req.body.userid)
-    if(!reqUserid){
+exports.readTweet = async(req, res, next) => {
+    let reqUserid = parseInt(req.userid)
+    if(!reqUserid || isNaN(reqUserid)){
         return utils.classResponse(false, {}, TEXT.noUserId)
     }
     try {
-        let tweetsResponse = await tweetClass.readTweet(reqUserid)
+        let tweetsResponse = await TweetClass.readTweet(reqUserid)
         return utils.sendResponse(res, true, tweetsResponse.data, "")
     } catch (error) {
         return utils.sendResponse(res, false, {}, error)
@@ -80,18 +85,19 @@ exports.readTweet = async(req, res) => {
 /**
  * update Tweet
  * @param {object} req 
- * @param {object} res 
+ * @param {object} res
+ * @param {Object} next 
  */
-exports.updateTweet = async(req, res) => {
-    let reqUserid = parseInt(req.body.userid)
+exports.updateTweet = async(req, res, next) => {
+    let reqUserid = parseInt(req.userid)
     let reqId = parseInt(req.body.id)
-    let reqTweet = req.body.tweet.toString()
-    let errors = tweetFunction.emptyFieldUpdateTweet(reqId, reqUserid, reqTweet)
+    let reqTweet = (req.body.tweet || "").toString()
+    let errors = TweetFunction.emptyFieldUpdateTweet(reqId, reqUserid, reqTweet)
     if(errors.length){
         return utils.sendResponse(res, false, {}, errors.join(","))
     }
     try {
-        let updateTweetResponse = await tweetClass.updateTweet(reqId, reqUserid, reqTweet)
+        let updateTweetResponse = await TweetClass.updateTweet(reqId, reqUserid, reqTweet)
         return utils.sendResponse(res, true, updateTweetResponse.data, "")
     } catch (error) {
         return utils.sendResponse(res, false, {}, error)
@@ -103,18 +109,22 @@ exports.updateTweet = async(req, res) => {
  * Tweet with all comments along with user name
  * @param {object} req 
  * @param {object} res 
+ * @param {Object} next
  */
-exports.allTweetCommentsWithUser = async(req, res) => {
+exports.allTweetCommentsWithUser = async(req, res, next) => {
     try {
         let pageno = parseInt(req.params.pageno);
+        if(!pageno || isNaN(pageno)){
+            pageno = Constant.defaultPageNo
+        }
         let tweetid = parseInt(req.params.tid)
-        if(!pageno || !tweetid){
-            return utils.sendResponse(res, false, {}, TEXT.noPageNo + TEXT.noTweetId)
+        if(!tweetid || isNaN(tweetid)){
+            return utils.sendResponse(res, false, {}, TEXT.noTweetId)
         }
         pageno = pageno-1;
-        const pageSize = constant.limitTweets;
+        let pageSize = Constant.limitTweets;
         let offsetValue = (pageno*pageSize);
-        const rowsRecordResponse = await tweetClass.allTweetCommentsWithUser(tweetid, offsetValue)
+        let rowsRecordResponse = await TweetClass.allTweetCommentsWithUser(tweetid, offsetValue)
         return utils.sendResponse(res, true, rowsRecordResponse.data, "")
     } catch (error) {
         return utils.sendResponse(res, false, {}, error)

@@ -1,12 +1,16 @@
-const likes = require("../../model/Likes")
-const userdb = require("../../model/User")
+const Likes = require("../../model/Likes")
+const User = require("../../model/User")
+
 const utils = require("../../utils")
-const { ERRORS } = require("../../errorConstants")
+const ERRORS = require("../../errorConstants").ERRORS
 const TEXT = require("../../text").TEXT
 
 /**
  * Insert data of user who liked the comment
- * @param {Object} createData 
+ * @param {Integer} reqUserId 
+ * @param {Integer} reqcommentId 
+ * @param {String} reqLikeType 
+ * @returns 
  */
 exports.createLike = async (reqUserId, reqcommentId, reqLikeType) => {
     let createData = {
@@ -15,13 +19,15 @@ exports.createLike = async (reqUserId, reqcommentId, reqLikeType) => {
         entity_id : reqcommentId,
         like_type : reqLikeType
     }
-    const createLike = await likes.create(createData)
+    const createLike = await Likes.create(createData)
     return utils.classResponse(true, createLike, "")
 }
 
 /**
  * Reads and checks if user liked this comment or not
- * @param {Object} whereData 
+ * @param {Integer} reqUserId 
+ * @param {Integer} reqcommentId 
+ * @returns 
  */
 exports.readLike = async (reqUserId, reqcommentId) => {
     let whereData = {
@@ -29,7 +35,7 @@ exports.readLike = async (reqUserId, reqcommentId) => {
         entity_type : TEXT.entityComment,
         entity_id : reqcommentId
     }
-    const readLike = await likes.findAll({
+    const readLike = await Likes.findAll({
         where: whereData
     })
     if (readLike.length == 0) {
@@ -39,8 +45,10 @@ exports.readLike = async (reqUserId, reqcommentId) => {
 }
 
 /**
- * Dislike comment or deletes entry from likes table when user dislike the comment
- * @param {Object} whereData 
+ * Dislike comment or deletes entry from Likes table when user dislike the comment
+ * @param {Integer} reqUserId 
+ * @param {Integer} reqcommentId 
+ * @returns 
  */
 exports.deleteLike = async (reqUserId, reqcommentId) => {
     let whereData = {
@@ -48,7 +56,7 @@ exports.deleteLike = async (reqUserId, reqcommentId) => {
         entity_type : TEXT.entityComment,
         entity_id : reqcommentId
     }
-    const deleteLike = await likes.destroy({
+    const deleteLike = await Likes.destroy({
         where: whereData
     })
     return utils.classResponse(true, deleteLike, "")
@@ -56,8 +64,8 @@ exports.deleteLike = async (reqUserId, reqcommentId) => {
 
 /**
  * All user who liked this comment
- * @param {Object} whereData 
- * @param {Array} includeData 
+ * @param {Integer} reqcommentId 
+ * @returns 
  */
 exports.whoAllLikedcomment = async (reqcommentId) => {
     let whereData = {
@@ -66,11 +74,11 @@ exports.whoAllLikedcomment = async (reqcommentId) => {
     }
     let includeData = [
         {
-            model : userdb, as : "user",
+            model : User, as : "user",
             attributes:['id', 'name']
         }
     ]
-    const usersList = await likes.findAll({
+    const usersList = await Likes.findAll({
         where: whereData,
         include: includeData
     })
@@ -79,7 +87,9 @@ exports.whoAllLikedcomment = async (reqcommentId) => {
 
 /**
  * Checks if comment was liked by signed in user or not
- * @param {*Object} whereData 
+ * @param {Integer} reqUserid 
+ * @param {Integer} commentid 
+ * @returns 
  */
 exports.isCommentLikedByMe = async (reqUserid, commentid) => {
     let whereData = {
@@ -87,7 +97,7 @@ exports.isCommentLikedByMe = async (reqUserid, commentid) => {
         entity_type : TEXT.entityComment,
         entity_id : commentid
     }
-    const isCommentLikedByMe = await likes.findOne({
+    let isCommentLikedByMe = await Likes.findOne({
         where: whereData
     })
     if (isCommentLikedByMe == null) {

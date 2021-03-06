@@ -31,7 +31,7 @@ exports.authenticateToken = (req, res, next) => {
             console.log("Error : "+ err)
         }
         console.log(decoded)
-        req.body.userid = decoded
+        req.userid = decoded
     })
     next()
 }

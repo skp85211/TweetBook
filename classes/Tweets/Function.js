@@ -5,9 +5,9 @@ const TEXT = require("../../text").TEXT
  * @param {Integer} uid 
  * @param {String} tweet 
  */
-exports.emptyFieldCreateTweet = (uid, tweet) => {
+const emptyFieldCreateTweet = (uid, tweet) => {
     let errors = []
-    if (!uid) {
+    if (!uid || isNaN(uid)) {
         errors.push(TEXT.noUserId)
     }
     if (!tweet) {
@@ -16,12 +16,19 @@ exports.emptyFieldCreateTweet = (uid, tweet) => {
     return errors
 }
 
-exports.emptyFieldUpdateTweet = (id, uid, tweet) => {
+/**
+ * check id, uid, tweet are empty or not
+ * @param {Integer} id 
+ * @param {Integer} uid 
+ * @param {String} tweet 
+ * @returns 
+ */
+const emptyFieldUpdateTweet = (id, uid, tweet) => {
     let errors = []
-    if (!id) {
+    if (!id || isNaN(id)) {
         errors.push(TEXT.noID)
     }
-    if (!uid) {
+    if (!uid || isNaN(uid)) {
         errors.push(TEXT.noUserId)
     }
     if (!tweet) {
@@ -29,3 +36,5 @@ exports.emptyFieldUpdateTweet = (id, uid, tweet) => {
     }
     return errors
 }
+
+module.exports = { emptyFieldCreateTweet, emptyFieldUpdateTweet }

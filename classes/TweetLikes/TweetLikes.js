@@ -1,12 +1,17 @@
-const likes = require("../../model/Likes")
-const userdb = require("../../model/User")
+const Likes = require("../../model/Likes")
+const User = require("../../model/User")
+
 const utils = require("../../utils")
-const { ERRORS } = require("../../errorConstants")
+const ERRORS = require("../../errorConstants").ERRORS
 const TEXT = require("../../text").TEXT
+
 
 /**
  * Insert data of user who liked the tweet
- * @param {Object} createData 
+ * @param {Integer} reqUserId 
+ * @param {Integer} reqTweetId 
+ * @param {String} reqLikeType 
+ * @returns 
  */
 exports.createLike = async (reqUserId, reqTweetId, reqLikeType) => {
     let createData = {
@@ -15,13 +20,16 @@ exports.createLike = async (reqUserId, reqTweetId, reqLikeType) => {
         entity_id : reqTweetId,
         like_type : reqLikeType
     }
-    const createLike = await likes.create(createData)
+    let createLike = await Likes.create(createData)
     return utils.classResponse(true, createLike, "")
 }
 
+
 /**
  * Reads and checks if user liked this tweet or not
- * @param {Object} whereData 
+ * @param {Integer} reqUserId 
+ * @param {Integer} reqTweetId 
+ * @returns 
  */
 exports.readLike = async (reqUserId, reqTweetId) => {
     let whereData = {
@@ -29,7 +37,7 @@ exports.readLike = async (reqUserId, reqTweetId) => {
         entity_type : TEXT.entityTweet,
         entity_id : reqTweetId
     }
-    const readLike = await likes.findAll({
+    let readLike = await Likes.findAll({
         where: whereData
     })
     if (readLike.length == 0) {
@@ -38,9 +46,12 @@ exports.readLike = async (reqUserId, reqTweetId) => {
     return utils.classResponse(true, readLike, "")
 }
 
+
 /**
- * Dislike tweet or deletes entry from likes table when user dislike the tweet
- * @param {Object} whereData 
+ * Dislike tweet or deletes entry from Likes table when user dislike the tweet
+ * @param {Integer} reqUserId 
+ * @param {Integer} reqTweetId 
+ * @returns 
  */
 exports.deleteLike = async (reqUserId, reqTweetId) => {
     let whereData = {
@@ -48,16 +59,17 @@ exports.deleteLike = async (reqUserId, reqTweetId) => {
         entity_type : TEXT.entityTweet,
         entity_id : reqTweetId
     }
-    const deleteLike = await likes.destroy({
+    let deleteLike = await Likes.destroy({
         where: whereData
     })
     return utils.classResponse(true, deleteLike, "")
 }
 
+
 /**
  * All user who liked this tweet
- * @param {Object} whereData 
- * @param {Array} includeData 
+ * @param {Integer} reqTweetId 
+ * @returns 
  */
 exports.whoAllLikedTweet = async (reqTweetId) => {
     let whereData = {
@@ -66,11 +78,11 @@ exports.whoAllLikedTweet = async (reqTweetId) => {
     }
     let includeData = [
         {
-            model : userdb, as : "user",
+            model : User, as : "user",
             attributes:['id', 'name']
         }
     ]
-    const usersList = await likes.findAll({
+    let usersList = await Likes.findAll({
         where: whereData,
         include: includeData
     })

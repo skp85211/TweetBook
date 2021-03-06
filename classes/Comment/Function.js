@@ -6,7 +6,7 @@ const TEXT = require("../../text").TEXT
  * @param {Integer} uid 
  * @param {TEXT} comment 
  */
-exports.emptyFieldCreateComment = (tid, uid, comment) => {
+const emptyFieldCreateComment = (tid, uid, comment) => {
     let errors = []
     if (!tid) {
         errors.push(TEXT.noTid)
@@ -19,3 +19,5 @@ exports.emptyFieldCreateComment = (tid, uid, comment) => {
     }
     return errors
 }
+
+module.exports = { emptyFieldCreateComment }

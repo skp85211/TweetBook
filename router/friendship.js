@@ -13,7 +13,7 @@ Router.get("/friendAccept/:userid1/:userid2", jwtAuth.authenticateToken,friendsh
 Router.get("/friendReject/:userid1/:userid2", jwtAuth.authenticateToken,friendshipFunc.friendRequestReject)
 
 //gets tweets of user's friends
-Router.get("/getTweets/:uid/:pageno", jwtAuth.authenticateToken,friendshipFunc.friendsTweet)
+Router.get("/getTweets", jwtAuth.authenticateToken,friendshipFunc.friendsTweet)
 
 //gets all friend request from different user that can be accepted or rejected
 Router.post("/all/friendRequest", jwtAuth.authenticateToken,friendshipFunc.allFriendRequest)

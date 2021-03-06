@@ -1,16 +1,18 @@
-const tweetdb = require("../../model/Tweets")
-const userdb = require("../../model/User")
-const commentdb = require("../../model/Comments")
-const constant = require("./constant")
-const utils = require("../../utils")
 const { Op } = require("sequelize")
+
+const Tweets = require("../../model/Tweets")
+const User = require("../../model/User")
+const Comment = require("../../model/Comments")
+
+const Constant = require("./Constant")
+const utils = require("../../utils")
+
 
 /**
  * for ALL tweets (latest tweet with pagination)
- * @param {object} whereData 
- * @param {Array} includeData 
- * @param {Array} orderData 
+ * @param {Integer} reqUserid 
  * @param {Integer} oset 
+ * @returns 
  */
 exports.allLatestTweets = async (reqUserid, oset) => {
     let whereData = {
@@ -20,19 +22,19 @@ exports.allLatestTweets = async (reqUserid, oset) => {
     }
     let includeData = [
         {
-            model:userdb, as:"user",
+            model:User, as:"user",
             attributes:['id', 'name']
         }
     ]
     let orderData = [
         ['createdAt', 'DESC']
     ]
-    const { count, rows } = await tweetdb.findAndCountAll({
+    let { count, rows } = await Tweets.findAndCountAll({
         where: whereData,
         include: includeData,
         order: orderData,
         offset: oset,
-        limit: constant.limitTweets
+        limit: Constant.limitTweets
     })
     return utils.classResponse(true, rows, "")
 }
@@ -40,22 +42,24 @@ exports.allLatestTweets = async (reqUserid, oset) => {
 
 /**
  * create New tweet
- * @param {object} createData 
+ * @param {Integer} reqUserid 
+ * @param {String} reqTweet 
+ * @returns 
  */
 exports.createTweet = async (reqUserid, reqTweet) => {
     let createData = {
         uid: reqUserid, 
         tweet: reqTweet
     }
-    const newTweet = await tweetdb.create(createData)
+    let newTweet = await Tweets.create(createData)
     return utils.classResponse(true, newTweet, "")
 }
 
 
 /**
  * gets all tweets to read
- * @param {object} whereData 
- * @param {Array} orderData 
+ * @param {Integer} reqUserid 
+ * @returns 
  */
 exports.readTweet = async (reqUserid) => {
     let whereData = {
@@ -64,7 +68,7 @@ exports.readTweet = async (reqUserid) => {
     let orderData = [
         ['createdAt', 'DESC']
     ]
-    const tweets = await tweetdb.findAll({
+    let tweets = await Tweets.findAll({
         where: whereData,
         order: orderData
     })
@@ -74,8 +78,10 @@ exports.readTweet = async (reqUserid) => {
 
 /**
  * Updates tweet
- * @param {object} updateData 
- * @param {object} whereData 
+ * @param {Integer} reqId 
+ * @param {Integer} reqUserid 
+ * @param {String} reqTweet 
+ * @returns 
  */
 exports.updateTweet = async (reqId, reqUserid, reqTweet) => {
     let updateData = {tweet : reqTweet}
@@ -83,7 +89,7 @@ exports.updateTweet = async (reqId, reqUserid, reqTweet) => {
         id: reqId,
         uid: reqUserid
     }
-    const updateTweet = await tweetdb.update(updateData, {
+    let updateTweet = await Tweets.update(updateData, {
         where: whereData
     })
     return utils.classResponse(true, updateTweet, "")
@@ -92,10 +98,9 @@ exports.updateTweet = async (reqId, reqUserid, reqTweet) => {
 
 /**
  * Gets specific tweet along with all comments with user name of users who commented on it
- * @param {object} whereData 
- * @param {Array} includeData 
- * @param {Array} orderData 
+ * @param {Integer} tweetid 
  * @param {Integer} oset 
+ * @returns 
  */
 exports.allTweetCommentsWithUser = async (tweetid, oset) => {
     let whereData = {
@@ -105,10 +110,10 @@ exports.allTweetCommentsWithUser = async (tweetid, oset) => {
     }
     let includeData = [
         {
-            model:commentdb, as:"comments",
+            model:Comment, as:"comments",
             include : [
                 {
-                    model:userdb, as:"user",
+                    model:User, as:"user",
                     attributes:['id', 'name']
                 }
             ]
@@ -117,12 +122,12 @@ exports.allTweetCommentsWithUser = async (tweetid, oset) => {
     let orderData = [
         ['createdAt', 'DESC']
     ]
-    const { count, rows } = await tweetdb.findAndCountAll({
+    let { count, rows } = await Tweets.findAndCountAll({
         where: whereData,
         include: includeData,
         order: orderData,
         offset: oset,
-        limit: constant.limitTweets
+        limit: Constant.limitTweets
     })
     return utils.classResponse(true, rows, "")
 }
