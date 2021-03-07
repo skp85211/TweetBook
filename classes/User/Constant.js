@@ -1,6 +1,7 @@
-const updateTypeName = 1
-const updateTypePassword = 2
-const defaultPageNo = 1
-const defaultPageSize = 10
-
-module.exports = { updateTypeName, updateTypePassword, defaultPageNo, defaultPageSize }
+const Constant = {
+    updateTypeName : 1,
+    updateTypePassword : 2,
+    defaultPageNo : 1,
+    defaultPageSize : 10
+}
+module.exports ={ Constant }

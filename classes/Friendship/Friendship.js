@@ -5,15 +5,16 @@ const Friendship = require("../../model/Friendship")
 const User = require("../../model/User")
 const Likes = require("../../model/Likes")
 
-const constant = require("./constant")
+const constant = require("./constant").Constant
 const utils = require("../../utils")
 const TEXT = require("../../text").TEXT
 
 /**
- * 
- * @param {Object} whereData 
+ * Gets list of all friends from friends list array of user
+ * @param {Array} friendListArr 
+ * @returns 
  */
-exports.allFriends = async(friendListArr) => {
+const allFriends = async(friendListArr) => {
     let whereData = {
         id: friendListArr
     }
@@ -26,9 +27,11 @@ exports.allFriends = async(friendListArr) => {
 
 /**
  * check if users are already in any relation (checks relation status)
- * @param {object} whereData 
+ * @param {Integer} userid1 
+ * @param {Integer} userid2 
+ * @returns 
  */
-exports.friendshipCheck = async (userid1, userid2) => {
+const friendshipCheck = async (userid1, userid2) => {
     let whereData = {
         user1_id: userid1,
         user2_id: userid2
@@ -41,9 +44,12 @@ exports.friendshipCheck = async (userid1, userid2) => {
 
 /**
  * Sends friend request to other user, changes status to pending and actionid 
- * @param {object} whereDataCreate 
+ * @param {Integer} user1id 
+ * @param {Integer} user2id 
+ * @param {Integer} action_id 
+ * @returns 
  */
-exports.friendshipRequestSend = async (user1id, user2id, action_id) => {
+const friendshipRequestSend = async (user1id, user2id, action_id) => {
     let whereDataCreate = {
         user1_id: user1id,
         user2_id: user2id,
@@ -55,11 +61,14 @@ exports.friendshipRequestSend = async (user1id, user2id, action_id) => {
 }
 
 /**
- * friend Request Accept/Reject , changing status -> Accepted(1) or Rejected(2)=>Blocked, action_id
- * @param {object} updateData 
- * @param {object} whereData 
+ * friend Request Accept/Reject , changing status -> Accepted(1) or Rejected(2)=>Blocked, action_id of user who requested this action
+ * @param {Integer} acceptRejectStatus 
+ * @param {Integer} action_id 
+ * @param {Integer} user1id 
+ * @param {Integer} user2id 
+ * @returns 
  */
-exports.friendRequestUpdate = async (acceptRejectStatus, action_id, user1id, user2id) => {
+const friendRequestUpdate = async (acceptRejectStatus, action_id, user1id, user2id) => {
     let updateData = {
         status: acceptRejectStatus,
         action_uid: action_id
@@ -76,9 +85,10 @@ exports.friendRequestUpdate = async (acceptRejectStatus, action_id, user1id, use
 
 /**
  * List all friends of particular user
- * @param {Object} whereData 
+ * @param {Integer} reqUserid 
+ * @returns 
  */
-exports.friendsList = async (reqUserid) => {
+const friendsList = async (reqUserid) => {
     let whereData = {
         [Op.and]: [
             {
@@ -103,7 +113,7 @@ exports.friendsList = async (reqUserid) => {
  * @param {Integer} reqUserid 
  * @returns 
  */
-exports.allFriendsRequestList = async (reqUserid) => {
+const allFriendsRequestList = async (reqUserid) => {
     let whereData = {
         [Op.and]: [
             {
@@ -129,14 +139,13 @@ exports.allFriendsRequestList = async (reqUserid) => {
     return utils.classResponse(true, friendList, "")
 }
 
-
 /**
  * Find tweets of all user id who are user's friends
- * @param {object} whereDataFriends 
- * @param {Array} includeDataFriends 
- * @param {Array} orderDataFriends 
+ * @param {Array} friendListArr 
+ * @param {Integer} oset 
+ * @returns 
  */
-exports.friendsTweets = async (friendListArr, oset) => {
+const friendsTweets = async (friendListArr, oset) => {
     let whereDataFriends = {
         uid: friendListArr
     }
@@ -168,9 +177,11 @@ exports.friendsTweets = async (friendListArr, oset) => {
 
 /**
  * Checks if tweet was liked by signed in user or not
- * @param {*Object} whereData 
+ * @param {Integer} reqUserid 
+ * @param {Integer} tweetid 
+ * @returns 
  */
-exports.isTweetLikedByMe = async (reqUserid, tweetid) => {
+const isTweetLikedByMe = async (reqUserid, tweetid) => {
     let whereData = {
         user_id : reqUserid,
         entity_type : TEXT.entityTweet,
@@ -186,12 +197,12 @@ exports.isTweetLikedByMe = async (reqUserid, tweetid) => {
 }
 
 /**
- * Gets all latest tweets
+ * Gets all latest tweets of users
  * @param {Integer} reqUserid 
  * @param {Integer} oset 
  * @returns 
  */
-exports.allLatestTweets = async (reqUserid, oset) => {
+const allLatestTweets = async (reqUserid, oset) => {
     let whereData = {
         uid:{
             [Op.ne] : reqUserid
@@ -222,3 +233,5 @@ exports.allLatestTweets = async (reqUserid, oset) => {
     })
     return utils.classResponse(true, rows, "")
 }
+
+module.exports = { allFriends, friendshipCheck, friendshipRequestSend, friendRequestUpdate, friendsList, allFriendsRequestList, friendsTweets, isTweetLikedByMe, allLatestTweets }

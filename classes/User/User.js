@@ -1,9 +1,9 @@
 const { Op } = require("sequelize")
+
 const User = require("../../model/User")
 const Tweets = require("../../model/Tweets")
 
 const utils = require("../../utils")
-
 
 /**
  * search user with given email/phone number if exists or not
@@ -39,7 +39,6 @@ const searchUser = async (reqUserid, reqEmailorName) => {
     return utils.classResponse(true, userSearch, "")
 }
 
-
 /**
  * search user with given email/phone number
  * @param {String} reqEmail 
@@ -54,7 +53,6 @@ const searchUserwithEmail = async (reqEmail) => {
     })
     return utils.classResponse(true, userSearch, "")
 }
-
 
 /**
  * search user with given id number if exists or not

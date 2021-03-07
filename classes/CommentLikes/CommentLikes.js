@@ -12,7 +12,7 @@ const TEXT = require("../../text").TEXT
  * @param {String} reqLikeType 
  * @returns 
  */
-exports.createLike = async (reqUserId, reqcommentId, reqLikeType) => {
+const createLike = async (reqUserId, reqcommentId, reqLikeType) => {
     let createData = {
         user_id : reqUserId,
         entity_type : TEXT.entityComment,
@@ -29,7 +29,7 @@ exports.createLike = async (reqUserId, reqcommentId, reqLikeType) => {
  * @param {Integer} reqcommentId 
  * @returns 
  */
-exports.readLike = async (reqUserId, reqcommentId) => {
+const readLike = async (reqUserId, reqcommentId) => {
     let whereData = {
         user_id : reqUserId,
         entity_type : TEXT.entityComment,
@@ -50,7 +50,7 @@ exports.readLike = async (reqUserId, reqcommentId) => {
  * @param {Integer} reqcommentId 
  * @returns 
  */
-exports.deleteLike = async (reqUserId, reqcommentId) => {
+const deleteLike = async (reqUserId, reqcommentId) => {
     let whereData = {
         user_id : reqUserId,
         entity_type : TEXT.entityComment,
@@ -67,7 +67,7 @@ exports.deleteLike = async (reqUserId, reqcommentId) => {
  * @param {Integer} reqcommentId 
  * @returns 
  */
-exports.whoAllLikedcomment = async (reqcommentId) => {
+const whoAllLikedcomment = async (reqcommentId) => {
     let whereData = {
         entity_type : TEXT.entityComment,
         entity_id : reqcommentId
@@ -91,7 +91,7 @@ exports.whoAllLikedcomment = async (reqcommentId) => {
  * @param {Integer} commentid 
  * @returns 
  */
-exports.isCommentLikedByMe = async (reqUserid, commentid) => {
+const isCommentLikedByMe = async (reqUserid, commentid) => {
     let whereData = {
         user_id : reqUserid,
         entity_type : TEXT.entityComment,
@@ -105,3 +105,5 @@ exports.isCommentLikedByMe = async (reqUserid, commentid) => {
     }
     return utils.classResponse(true, isCommentLikedByMe, "")
 }
+
+module.exports = { createLike, readLike, deleteLike, whoAllLikedcomment, isCommentLikedByMe }

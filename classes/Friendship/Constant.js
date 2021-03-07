@@ -1,7 +1,11 @@
-const pendingStatus = 0
-const acceptedStatus = 1
-const blockedStatus = 2
-const limitTweets = 10
-const initialCount = 0
-const defaultPageNo = 1
-module.exports = { pendingStatus, acceptedStatus, blockedStatus, limitTweets, initialCount, defaultPageNo }
+const Constant = {
+    pendingStatus : 0,
+    acceptedStatus : 1,
+    blockedStatus : 2,
+    limitTweets : 10,
+    initialCount : 0,
+    defaultPageNo : 1,
+}
+
+
+module.exports = { Constant }

@@ -4,9 +4,8 @@ const Tweets = require("../../model/Tweets")
 const User = require("../../model/User")
 const Comment = require("../../model/Comments")
 
-const Constant = require("./Constant")
+const Constant = require("./Constant").Constant
 const utils = require("../../utils")
-
 
 /**
  * for ALL tweets (latest tweet with pagination)
@@ -14,7 +13,7 @@ const utils = require("../../utils")
  * @param {Integer} oset 
  * @returns 
  */
-exports.allLatestTweets = async (reqUserid, oset) => {
+const allLatestTweets = async (reqUserid, oset) => {
     let whereData = {
         uid:{
             [Op.ne] : reqUserid
@@ -39,14 +38,13 @@ exports.allLatestTweets = async (reqUserid, oset) => {
     return utils.classResponse(true, rows, "")
 }
 
-
 /**
  * create New tweet
  * @param {Integer} reqUserid 
  * @param {String} reqTweet 
  * @returns 
  */
-exports.createTweet = async (reqUserid, reqTweet) => {
+const createTweet = async (reqUserid, reqTweet) => {
     let createData = {
         uid: reqUserid, 
         tweet: reqTweet
@@ -55,13 +53,12 @@ exports.createTweet = async (reqUserid, reqTweet) => {
     return utils.classResponse(true, newTweet, "")
 }
 
-
 /**
  * gets all tweets to read
  * @param {Integer} reqUserid 
  * @returns 
  */
-exports.readTweet = async (reqUserid) => {
+const readTweet = async (reqUserid) => {
     let whereData = {
         uid:reqUserid
     }
@@ -75,7 +72,6 @@ exports.readTweet = async (reqUserid) => {
     return utils.classResponse(true, tweets, "")
 }
 
-
 /**
  * Updates tweet
  * @param {Integer} reqId 
@@ -83,7 +79,7 @@ exports.readTweet = async (reqUserid) => {
  * @param {String} reqTweet 
  * @returns 
  */
-exports.updateTweet = async (reqId, reqUserid, reqTweet) => {
+const updateTweet = async (reqId, reqUserid, reqTweet) => {
     let updateData = {tweet : reqTweet}
     let whereData = {
         id: reqId,
@@ -95,6 +91,22 @@ exports.updateTweet = async (reqId, reqUserid, reqTweet) => {
     return utils.classResponse(true, updateTweet, "")
 }
 
+/**
+ * Delete comments from database
+ * @param {Integr} reqId
+ * @param {Integer} reqUserid 
+ * @returns 
+ */
+ const deleteTweet = async (reqId, reqUserid) => {
+    let whereData = {
+        id: reqId,
+        uid: reqUserid
+    }
+    let deleteTweet = await Tweets.destroy({
+        where: whereData
+    })
+    return utils.classResponse(true, deleteTweet, "")
+}
 
 /**
  * Gets specific tweet along with all comments with user name of users who commented on it
@@ -102,7 +114,7 @@ exports.updateTweet = async (reqId, reqUserid, reqTweet) => {
  * @param {Integer} oset 
  * @returns 
  */
-exports.allTweetCommentsWithUser = async (tweetid, oset) => {
+const allTweetCommentsWithUser = async (tweetid, oset) => {
     let whereData = {
         id:{
             [Op.eq] : tweetid
@@ -131,3 +143,5 @@ exports.allTweetCommentsWithUser = async (tweetid, oset) => {
     })
     return utils.classResponse(true, rows, "")
 }
+
+module.exports = { allLatestTweets, createTweet, readTweet, updateTweet, deleteTweet, allTweetCommentsWithUser }

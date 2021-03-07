@@ -6,6 +6,7 @@ const TEXT = require("../../text").TEXT
  * Check if search field is empty or not
  * @param {String} email 
  * @param {Integer} uid
+ * @returns 
  */
 const emptySearchField = (email, uid) => {
     let errors = []
@@ -22,6 +23,7 @@ const emptySearchField = (email, uid) => {
  * check if email or password field is empty or not
  * @param {String} email 
  * @param {String} password 
+ * @returns 
  */
 const emptyLoginField = (email, password) => {
     let errors = []
@@ -38,17 +40,21 @@ const emptyLoginField = (email, password) => {
  * Checks all signup fields
  * @param {String} name 
  * @param {String} email 
- * @param {String} password 
+ * @param {String} password
+ * @returns  
  */
 const emptySignupField = (name, email, password) => {
+    let nameRegex = /^[a-zA-Z\s]+$/;
+    let phoneRegex = /^[7-9][0-9]{9}$/;
+    let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
     let errors = []
-    if (!name) {
+    if ((!name) || (nameRegex.test(name) === false)) {
         errors.push(TEXT.noName)
     }
     if (!password) {
         errors.push(TEXT.noPassword)
     }
-    if (!email) {
+    if ((!email) || ((emailRegex.test(email) === false) && (phoneRegex.test(email) === false))) {
         errors.push(TEXT.noEmail)
     }
     return errors
@@ -59,6 +65,7 @@ const emptySignupField = (name, email, password) => {
  * @param {Integer} uid 
  * @param {String} name 
  * @param {String} password 
+ * @returns 
  */
 const emptyUpdateName = (uid, name, password) => {
     let errors = []
@@ -79,6 +86,7 @@ const emptyUpdateName = (uid, name, password) => {
  * @param {Integer} uid 
  * @param {String} password 
  * @param {String} newpassword 
+ * @returns 
  */
 const emptyUpdatePassword = (uid, password, newpassword) => {
     let errors = []
@@ -99,6 +107,7 @@ const emptyUpdatePassword = (uid, password, newpassword) => {
  * @param {Integer} pageno 
  * @param {Integer} pageSize 
  * @param {Integer} userid 
+ * @returns 
  */
 const emptyusersAllTweets = (pageno, pageSize, userid) => {
     let errors = []

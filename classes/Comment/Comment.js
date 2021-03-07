@@ -3,7 +3,7 @@ const Tweets = require("../../model/Tweets")
 const User = require("../../model/User")
 const Likes = require("../../model/Likes")
 
-const Constant = require("./Constant")
+const Constant = require("./Constant").Constant
 const utils = require("../../utils")
 
 /**
@@ -11,7 +11,7 @@ const utils = require("../../utils")
  * @param {Integer} reqTweetid 
  * @returns 
  */
-exports.checkTweetIdExists = async (reqTweetid) => {
+const checkTweetIdExists = async (reqTweetid) => {
     let whereData = { 
         id : reqTweetid
     }
@@ -28,7 +28,7 @@ exports.checkTweetIdExists = async (reqTweetid) => {
  * @param {Integer} reqUserid 
  * @returns 
  */
-exports.checkUserIdExists = async (reqUserid) => {
+const checkUserIdExists = async (reqUserid) => {
     let attribute = ['id']
         let whereData = {
             id:reqUserid
@@ -40,14 +40,13 @@ exports.checkUserIdExists = async (reqUserid) => {
     return utils.classResponse(true, uidCheck, "")
 }
 
-
 /**
  * Insert comments in comment table
  * @param {Integer} tid 
  * @param {Integer} uid 
  * @param {String} comment 
  */
-exports.createComment = async (tid, uid, comment) => {
+const createComment = async (tid, uid, comment) => {
     let newComment = await Comment.create({
         tid: tid,
         uid: uid,
@@ -61,7 +60,7 @@ exports.createComment = async (tid, uid, comment) => {
  * @param {Integer} reqTweetid 
  * @returns 
  */
-exports.readComment = async (reqTweetid) => {
+const readComment = async (reqTweetid) => {
     let whereData = {
         tid : reqTweetid
     }
@@ -83,7 +82,7 @@ exports.readComment = async (reqTweetid) => {
  * @param {String} reqComment 
  * @returns 
  */
-exports.updateComment = async (reqId, reqTweetid, reqUserid, reqComment) => {
+const updateComment = async (reqId, reqTweetid, reqUserid, reqComment) => {
     let updateData = {comment : reqComment}
     let whereData = {
         [Op.and] : [
@@ -105,7 +104,7 @@ exports.updateComment = async (reqId, reqTweetid, reqUserid, reqComment) => {
  * @param {Integer} reqUserid 
  * @returns 
  */
-exports.deleteComment = async (reqId, reqTweetid, reqUserid) => {
+const deleteComment = async (reqId, reqTweetid, reqUserid) => {
     let whereData = {
         id: reqId,
         tid:reqTweetid,
@@ -119,8 +118,9 @@ exports.deleteComment = async (reqId, reqTweetid, reqUserid) => {
 
 /**
  * gets all comments under all tweets
+ * @returns 
  */
-exports.allInComment = async () => {
+const allInComment = async () => {
     let allComments = await Tweets.findAll({
         include: ["comments"]
     })
@@ -133,7 +133,7 @@ exports.allInComment = async () => {
  * @param {Integer} oset 
  * @returns 
  */
-exports.commentsUnderTweetsdb = async (reqTweetid, oset) => {
+const commentsUnderTweetsdb = async (reqTweetid, oset) => {
     let whereData = {
         tid:reqTweetid
     }
@@ -158,3 +158,5 @@ exports.commentsUnderTweetsdb = async (reqTweetid, oset) => {
     })
     return utils.classResponse(true, rows, "")
 }
+
+module.exports = { checkTweetIdExists, checkUserIdExists, createComment, readComment, updateComment, deleteComment, allInComment, commentsUnderTweetsdb }

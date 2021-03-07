@@ -5,7 +5,6 @@ const utils = require("../../utils")
 const ERRORS = require("../../errorConstants").ERRORS
 const TEXT = require("../../text").TEXT
 
-
 /**
  * Insert data of user who liked the tweet
  * @param {Integer} reqUserId 
@@ -13,7 +12,7 @@ const TEXT = require("../../text").TEXT
  * @param {String} reqLikeType 
  * @returns 
  */
-exports.createLike = async (reqUserId, reqTweetId, reqLikeType) => {
+const createLike = async (reqUserId, reqTweetId, reqLikeType) => {
     let createData = {
         user_id : reqUserId,
         entity_type : TEXT.entityTweet,
@@ -24,14 +23,13 @@ exports.createLike = async (reqUserId, reqTweetId, reqLikeType) => {
     return utils.classResponse(true, createLike, "")
 }
 
-
 /**
  * Reads and checks if user liked this tweet or not
  * @param {Integer} reqUserId 
  * @param {Integer} reqTweetId 
  * @returns 
  */
-exports.readLike = async (reqUserId, reqTweetId) => {
+const readLike = async (reqUserId, reqTweetId) => {
     let whereData = {
         user_id : reqUserId,
         entity_type : TEXT.entityTweet,
@@ -46,14 +44,13 @@ exports.readLike = async (reqUserId, reqTweetId) => {
     return utils.classResponse(true, readLike, "")
 }
 
-
 /**
  * Dislike tweet or deletes entry from Likes table when user dislike the tweet
  * @param {Integer} reqUserId 
  * @param {Integer} reqTweetId 
  * @returns 
  */
-exports.deleteLike = async (reqUserId, reqTweetId) => {
+const deleteLike = async (reqUserId, reqTweetId) => {
     let whereData = {
         user_id : reqUserId,
         entity_type : TEXT.entityTweet,
@@ -65,13 +62,12 @@ exports.deleteLike = async (reqUserId, reqTweetId) => {
     return utils.classResponse(true, deleteLike, "")
 }
 
-
 /**
  * All user who liked this tweet
  * @param {Integer} reqTweetId 
  * @returns 
  */
-exports.whoAllLikedTweet = async (reqTweetId) => {
+const whoAllLikedTweet = async (reqTweetId) => {
     let whereData = {
         entity_type : TEXT.entityTweet,
         entity_id : reqTweetId
@@ -88,3 +84,5 @@ exports.whoAllLikedTweet = async (reqTweetId) => {
     })
     return utils.classResponse(true, usersList, "")
 }
+
+module.exports = { createLike, readLike, deleteLike, whoAllLikedTweet }

@@ -4,7 +4,7 @@ const utils = require("../utils");
 const UserFunction = require("../classes//User/Function")
 const TEXT = require("../text").TEXT
 const ERRORS = require('../errorConstants').ERRORS
-const ConstantFile = require("../classes/User/Constant")
+const ConstantFile = require("../classes/User/Constant").Constant
 const jwtauth = require("../jwtAuth")
 
 /**
@@ -12,6 +12,7 @@ const jwtauth = require("../jwtAuth")
  * @param {object} req 
  * @param {object} res 
  * @param {Object} next
+ * @returns 
  */
 exports.searchUser = async (req, res, next) => {
     let reqEmailorName = (req.body.email || "").toString()
@@ -24,7 +25,7 @@ exports.searchUser = async (req, res, next) => {
         let userSearchResponse = await User.searchUser(reqUserid, reqEmailorName)
         if (userSearchResponse.data.length == 0) {
             let data = { relationStatus: false }
-            return utils.sendResponse(res,false, data, TEXT.noUser)
+            return utils.sendResponse(res,false, data, ERRORS.noUser)
         }
         let userSearchArray = await UserFunction.userSearch(userSearchResponse.data, reqUserid)
         return utils.sendResponse(res,true, userSearchArray, "")
@@ -39,24 +40,25 @@ exports.searchUser = async (req, res, next) => {
  * @param {object} req 
  * @param {object} res 
  * @param {Object} next
+ * @returns 
  */
 exports.usersAllTweets = async (req, res, next) => {
     try {
-        let pageno = parseInt(req.body.pagenum);
+        let pageno = parseInt(req.headers.pagenum);
         if(!pageno || isNaN(pageno)){
             pageno = ConstantFile.defaultPageNo
         }
-        pageno = pageno - 1;
-        let pageSize = parseInt(req.body.pagesize);
+        let pageSize = parseInt(req.headers.pagesize);
         if(!pageSize || isNaN(pageSize)){
             pageSize = ConstantFile.defaultPageSize
         }
-        let offsetValue = (pageno * pageSize);
         let userid = parseInt(req.userid)
         let errors = UserFunction.emptyusersAllTweets(pageno, pageSize, userid)
         if (errors.length) {
             return utils.sendResponse(res,false, {}, errors.join(","))
         }
+        pageno = pageno - 1;
+        let offsetValue = (pageno * pageSize);
         let rowsRecord = await User.usersTweet(userid, offsetValue, pageSize)
         return utils.sendResponse(res,true, rowsRecord.data, "")
     } catch (error) {
@@ -69,6 +71,7 @@ exports.usersAllTweets = async (req, res, next) => {
  * @param {object} req 
  * @param {object} res 
  * @param {Object} next
+ * @returns 
  */
 exports.allUsersAllTweets = async (req, res, next) => {
     try {
@@ -84,6 +87,7 @@ exports.allUsersAllTweets = async (req, res, next) => {
  * @param {object} req 
  * @param {object} res 
  * @param {Object} next
+ * @returns 
  */
 exports.emailVerification = async (req, res, next) => {
     let reqEmail = (req.body.email || "").toString()
@@ -97,7 +101,7 @@ exports.emailVerification = async (req, res, next) => {
     try {
         let loginEmail = await User.searchUserwithEmail(reqEmail)
         if (loginEmail.data.length == 0) {
-            return utils.sendResponse(res, false, {}, TEXT.noUserExists)
+            return utils.sendResponse(res, false, {}, ERRORS.noUserExists)
         }
         else {
             return utils.sendResponse(res, true, {}, "")
@@ -112,6 +116,7 @@ exports.emailVerification = async (req, res, next) => {
  * @param {object} req 
  * @param {object} res 
  * @param {Object} next
+ * @returns 
  */
 exports.loginPasswordAuth = async (req, res, next) => {
     let reqEmail = (req.body.email || "").toString()
@@ -124,7 +129,7 @@ exports.loginPasswordAuth = async (req, res, next) => {
         let loginResponse = await User.searchUserwithEmail(reqEmail)
         let login = loginResponse.data[0]
         if (login.length == 0) {
-            return utils.sendResponse(res, false, {}, TEXT.noUserExists)
+            return utils.sendResponse(res, false, {}, ERRORS.noUserExists)
         }
         if (login.password != reqPassword) {
             return utils.sendResponse(res, false, {}, ERRORS.noPasswordMatch)
@@ -150,6 +155,7 @@ exports.loginPasswordAuth = async (req, res, next) => {
  * @param {object} req 
  * @param {object} res 
  * @param {Object} next
+ * @returns 
  */
 exports.signupUser = async (req, res, next) => {
     let reqName = (req.body.name || "").toString()
@@ -172,14 +178,15 @@ exports.signupUser = async (req, res, next) => {
  * @param {object} req 
  * @param {object} res 
  * @param {Object} next
+ * @returns 
  */
 exports.updateNamePassword = async (req, res, next) => {
     //updating Name
-    let reqType = parseInt(req.params.type)
+    let reqType = parseInt(req.body.type)
     if (!reqType) {
-        return utils.sendResponse(res, false, {}, TEXT.noUpdateType)
+        return utils.sendResponse(res, false, {}, ERRORS.noUpdateType)
     }
-    if (req.params.type == ConstantFile.updateTypeName) {
+    if (reqType == ConstantFile.updateTypeName) {
         let reqUserid = parseInt(req.userid)
         let reqName = (req.body.name || "").toString()
         let reqPassword = (req.body.password || "").toString()
@@ -203,7 +210,7 @@ exports.updateNamePassword = async (req, res, next) => {
         }
     }
     //updating password
-    if (req.params.type == ConstantFile.updateTypePassword) {
+    if (reqType == ConstantFile.updateTypePassword) {
         let reqUserid = parseInt(req.userid)
         let reqPassword = (req.body.password || "").toString()
         let reqNewPassword = (req.body.newpassword || "").toString()

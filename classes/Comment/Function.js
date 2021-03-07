@@ -4,14 +4,15 @@ const TEXT = require("../../text").TEXT
  * Checks tweetid, userid, comment fields are empty or not
  * @param {Integer} tid 
  * @param {Integer} uid 
- * @param {TEXT} comment 
+ * @param {String} comment 
+ * @returns 
  */
 const emptyFieldCreateComment = (tid, uid, comment) => {
     let errors = []
-    if (!tid) {
+    if (!tid || isNaN(tid)) {
         errors.push(TEXT.noTid)
     }
-    if (!uid) {
+    if (!uid || isNaN(uid)) {
         errors.push(TEXT.noUid)
     }
     if (!comment) {

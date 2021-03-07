@@ -7,7 +7,7 @@ const jwtAuth = require("../jwtAuth")
 Router.post("/create", jwtAuth.authenticateToken,commentFunc.createComment)
 
 //Read tweet
-Router.post("/read", jwtAuth.authenticateToken,commentFunc.readComment)
+Router.get("/read", jwtAuth.authenticateToken,commentFunc.readComment)
 
 //for update comment
 Router.post("/update", jwtAuth.authenticateToken,commentFunc.updateComment)
@@ -19,7 +19,7 @@ Router.post("/delete", jwtAuth.authenticateToken,commentFunc.deleteComment)
 Router.get("/all/in/tweets", jwtAuth.authenticateToken,commentFunc.allInComments)
 
 //comments under tweet with pagination
-Router.get("/tweets/tweetid/:tweetid/userid/:userid/:pageno", jwtAuth.authenticateToken,commentFunc.commentsUnderTweets)
+Router.get("/tweets", jwtAuth.authenticateToken,commentFunc.commentsUnderTweets)
 
 
 module.exports = Router
