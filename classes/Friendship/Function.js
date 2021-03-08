@@ -1,4 +1,4 @@
-const Constant = require("./constant")
+const Constant = require("./Constant").Constant
 const TEXT = require("../../text").TEXT
 
 /**

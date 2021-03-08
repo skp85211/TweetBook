@@ -27,6 +27,7 @@ const ERRORS = {
     noName : "No name to add",
     noUserId : "No user id",
     noNewPassword : "There is no new password to change",
+    dbError : "Something wrong with the query or Database"
 }
 
 module.exports = { ERRORS }

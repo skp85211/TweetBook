@@ -2,7 +2,7 @@ const express = require("express")
 const Router = express.Router()
 
 const userFunc = require("../controller/user")
-const jwtAuth = require("../jwtAuth")
+const jwtAuth = require("../controller/jwtAuth")
 
 //search user with email/phone and friendship relation and return details
 Router.post("/search", jwtAuth.authenticateToken, userFunc.searchUser)

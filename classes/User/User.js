@@ -1,9 +1,11 @@
+const utils = require("../../utils")
+
 const { Op } = require("sequelize")
 
 const User = require("../../model/User")
 const Tweets = require("../../model/Tweets")
 
-const utils = require("../../utils")
+const ERRORS = require("../../errorConstants").ERRORS
 
 /**
  * search user with given email/phone number if exists or not
@@ -12,31 +14,54 @@ const utils = require("../../utils")
  * @returns 
  */
 const searchUser = async (reqUserid, reqEmailorName) => {
-    let whereData = {
-        [Op.and]: [
-            {
-                [Op.or]: [
+    try {
+        let userSearch = await User.findAll({
+            where: {
+                [Op.and]: [
                     {
-                        name: {
-                            [Op.iLike]: '%' + reqEmailorName + '%'
-                        }
+                        [Op.or]: [
+                            {
+                                name: {
+                                    [Op.iLike]: '%' + reqEmailorName + '%'
+                                }
+                            },
+                            {
+                                email: reqEmailorName
+                            }
+                        ]
                     },
                     {
-                        email: reqEmailorName
+                        id: {
+                            [Op.ne]: reqUserid
+                        }
                     }
                 ]
-            },
-            {
-                id: {
-                    [Op.ne]: reqUserid
-                }
             }
-        ]
+        })
+        return utils.classResponse(true, userSearch, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let userSearch = await User.findAll({
-        where: whereData
-    })
-    return utils.classResponse(true, userSearch, "")
+}
+
+/**
+ * Checks if user id exist or not
+ * @param {Integer} reqUserid 
+ * @returns 
+ */
+ const checkUserIdExists = async (reqUserid) => {
+    try {
+        let uidCheck = await User.findAll({
+            attributes: ['id'],
+            where: {
+                id:reqUserid
+            }
+        })
+        return utils.classResponse(true, uidCheck, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
+    }
+    
 }
 
 /**
@@ -45,13 +70,16 @@ const searchUser = async (reqUserid, reqEmailorName) => {
  * @returns 
  */
 const searchUserwithEmail = async (reqEmail) => {
-    let whereData = {
-        email: reqEmail
+    try {
+        let userSearch = await User.findAll({
+            where: {
+                email: reqEmail
+            }
+        })
+        return utils.classResponse(true, userSearch, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let userSearch = await User.findAll({
-        where: whereData
-    })
-    return utils.classResponse(true, userSearch, "")
 }
 
 /**
@@ -60,13 +88,16 @@ const searchUserwithEmail = async (reqEmail) => {
  * @returns 
  */
 const searchUserwithId = async (reqUserid) => {
-    let whereData = {
-        id: reqUserid
+    try {
+        let userSearch = await User.findAll({
+            where: {
+                id: reqUserid
+            }
+        })
+        return utils.classResponse(true, userSearch, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let userSearch = await User.findAll({
-        where: whereData
-    })
-    return utils.classResponse(true, userSearch, "")
 }
 
 
@@ -78,21 +109,23 @@ const searchUserwithId = async (reqUserid) => {
  * @returns 
  */
 const usersTweet = async (userid, offsetValue, pageSize) => {
-    let whereData = {
-        id: userid
+    try {
+        let { count, rows } = await User.findAndCountAll({
+            where:{
+                id: userid
+            },
+            include: [
+                {
+                    model: Tweets, as: "tweets",
+                    offset: offsetValue,
+                    limit: pageSize
+                }
+            ]
+        })
+        return utils.classResponse(true, rows, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let includeData = [
-        {
-            model: Tweets, as: "tweets",
-            offset: offsetValue,
-            limit: pageSize
-        }
-    ]
-    let { count, rows } = await User.findAndCountAll({
-        where: whereData,
-        include: includeData
-    })
-    return utils.classResponse(true, rows, "")
 }
 
 /**
@@ -100,9 +133,12 @@ const usersTweet = async (userid, offsetValue, pageSize) => {
  * @returns
  */
 const allUsersAllTweets = async () => {
-    let includeData = ["tweets"]
-    let allUsersAllTweets = await User.findAll({ include: includeData })
-    return utils.classResponse(true, allUsersAllTweets, "")
+    try {
+        let allUsersAllTweets = await User.findAll({ include: ["tweets"] })
+        return utils.classResponse(true, allUsersAllTweets, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
+    }
 }
 
 /**
@@ -113,15 +149,18 @@ const allUsersAllTweets = async () => {
  * @returns 
  */
 const signupUser = async (reqName, reqEmail, reqPassword) => {
-    let createData = {
-        name: reqName,
-        email: reqEmail,
-        password: reqPassword
+    try {
+        let signup = await User.create({
+            name: reqName,
+            email: reqEmail,
+            password: reqPassword
+        })
+        return utils.classResponse(true, signup, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let signup = await User.create(createData)
-    return utils.classResponse(true, signup, "")
+    
 }
-
 
 /**
  * update name of user
@@ -129,15 +168,18 @@ const signupUser = async (reqName, reqEmail, reqPassword) => {
  * @param {Integer} reqUserid 
  * @returns 
  */
-const updateName = async (reqName, reqUserid) => {
-    let updateData = { name: reqName }
-    let whereData = {
-        id: reqUserid
+const updateName = async (reqName, reqUserid) => { 
+    try {
+        let updatedData = await User.update({ name: reqName }, {
+            where: {
+                id: reqUserid
+            }
+        })
+        return utils.classResponse(true, updatedData, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let updatedData = await User.update(updateData, {
-        where: whereData
-    })
-    return utils.classResponse(true, updatedData, "")
+    
 }
 
 
@@ -148,14 +190,17 @@ const updateName = async (reqName, reqUserid) => {
  * @returns 
  */
 const updatePassword = async (reqNewPassword, reqUserid) => {
-    let updateData = { password: reqNewPassword }
-    let whereData = {
-        id: reqUserid
+    try {
+        let updatedData = await User.update({ password: reqNewPassword }, {
+            where: {
+                id: reqUserid
+            }
+        })
+        return utils.classResponse(true, updatedData, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let updatedData = await User.update(updateData, {
-        where: whereData
-    })
-    return utils.classResponse(true, updatedData, "")
+    
 }
 
-module.exports = { searchUser, searchUserwithEmail, searchUserwithId, usersTweet, allUsersAllTweets, signupUser, updateName, updatePassword }
+module.exports = { searchUser, checkUserIdExists, searchUserwithEmail, searchUserwithId, usersTweet, allUsersAllTweets, signupUser, updateName, updatePassword }

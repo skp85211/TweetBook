@@ -1,7 +1,7 @@
 const express = require("express")
 const Router = express.Router()
 const tweetLikesFunc = require("../controller/tweetLikes")
-const jwtAuth = require("../jwtAuth")
+const jwtAuth = require("../controller/jwtAuth")
 
 //Create tweetLikes entry, Likes a tweet
 Router.post("/create", jwtAuth.authenticateToken,tweetLikesFunc.createLike)

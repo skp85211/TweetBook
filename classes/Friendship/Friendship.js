@@ -1,12 +1,13 @@
+const utils = require("../../utils")
+
 const { Op } = require("sequelize")
 
 const Tweets = require("../../model/Tweets")
 const Friendship = require("../../model/Friendship")
 const User = require("../../model/User")
 const Likes = require("../../model/Likes")
+const Constant = require("./Constant").Constant
 
-const constant = require("./constant").Constant
-const utils = require("../../utils")
 const TEXT = require("../../text").TEXT
 
 /**
@@ -15,14 +16,17 @@ const TEXT = require("../../text").TEXT
  * @returns 
  */
 const allFriends = async(friendListArr) => {
-    let whereData = {
-        id: friendListArr
+    try {
+        let allFriends = await User.findAll({
+            where : {
+                id: friendListArr
+            },
+            attributes : ['id', 'name', 'email']
+        })
+        return utils.classResponse(true, allFriends, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let allFriends = await User.findAll({
-        where : whereData,
-        attributes : ['id', 'name', 'email']
-    })
-    return utils.classResponse(true, allFriends, "")
 }
 
 /**
@@ -32,14 +36,17 @@ const allFriends = async(friendListArr) => {
  * @returns 
  */
 const friendshipCheck = async (userid1, userid2) => {
-    let whereData = {
-        user1_id: userid1,
-        user2_id: userid2
+    try {
+        let userPair = await Friendship.findAll({
+            where: {
+                user1_id: userid1,
+                user2_id: userid2
+            }
+        })
+        return utils.classResponse(true, userPair, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let userPair = await Friendship.findAll({
-        where: whereData
-    })
-    return utils.classResponse(true, userPair, "")
 }
 
 /**
@@ -50,14 +57,17 @@ const friendshipCheck = async (userid1, userid2) => {
  * @returns 
  */
 const friendshipRequestSend = async (user1id, user2id, action_id) => {
-    let whereDataCreate = {
-        user1_id: user1id,
-        user2_id: user2id,
-        status: constant.pendingStatus,
-        action_uid: action_id
+    try {
+        let friendRequest = await Friendship.create({
+            user1_id: user1id,
+            user2_id: user2id,
+            status: Constant.pendingStatus,
+            action_uid: action_id
+        })
+        return utils.classResponse(true, friendRequest, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let friendRequest = await Friendship.create(whereDataCreate)
-    return utils.classResponse(true, friendRequest, "")
 }
 
 /**
@@ -69,18 +79,20 @@ const friendshipRequestSend = async (user1id, user2id, action_id) => {
  * @returns 
  */
 const friendRequestUpdate = async (acceptRejectStatus, action_id, user1id, user2id) => {
-    let updateData = {
-        status: acceptRejectStatus,
-        action_uid: action_id
+    try {
+        let friendshipUpdate = await Friendship.update({
+            status: acceptRejectStatus,
+            action_uid: action_id
+        }, {
+            where: {
+                user1_id: user1id,
+                user2_id: user2id
+            }
+        })
+        return utils.classResponse(true, friendshipUpdate, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let whereData = {
-        user1_id: user1id,
-        user2_id: user2id
-    }
-    let friendshipUpdate = await Friendship.update(updateData, {
-        where: whereData
-    })
-    return utils.classResponse(true, friendshipUpdate, "")
 }
 
 /**
@@ -89,23 +101,26 @@ const friendRequestUpdate = async (acceptRejectStatus, action_id, user1id, user2
  * @returns 
  */
 const friendsList = async (reqUserid) => {
-    let whereData = {
-        [Op.and]: [
-            {
-                [Op.or]: [
-                    { user1_id: reqUserid },
-                    { user2_id: reqUserid }
+    try {
+        let friendList = await Friendship.findAll({
+            where: {
+                [Op.and]: [
+                    {
+                        [Op.or]: [
+                            { user1_id: reqUserid },
+                            { user2_id: reqUserid }
+                        ]
+                    },
+                    {
+                        status: Constant.acceptedStatus
+                    }
                 ]
-            },
-            {
-                status: constant.acceptedStatus
             }
-        ]
+        })
+        return utils.classResponse(true, friendList, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let friendList = await Friendship.findAll({
-        where: whereData
-    })
-    return utils.classResponse(true, friendList, "")
 }
 
 /**
@@ -114,29 +129,32 @@ const friendsList = async (reqUserid) => {
  * @returns 
  */
 const allFriendsRequestList = async (reqUserid) => {
-    let whereData = {
-        [Op.and]: [
-            {
-                [Op.or]: [
-                    { user1_id: reqUserid },
-                    { user2_id: reqUserid }
+    try {
+        let friendList = await Friendship.findAll({
+            where: {
+                [Op.and]: [
+                    {
+                        [Op.or]: [
+                            { user1_id: reqUserid },
+                            { user2_id: reqUserid }
+                        ]
+                    },
+                    {
+                        [Op.and]:[
+                            { status: Constant.pendingStatus },
+                            { action_uid : {
+                                [Op.ne]:reqUserid
+                            } }
+                        ]
+                        
+                    }
                 ]
-            },
-            {
-                [Op.and]:[
-                    { status: constant.pendingStatus },
-                    { action_uid : {
-                        [Op.ne]:reqUserid
-                    } }
-                ]
-                
             }
-        ]
+        })
+        return utils.classResponse(true, friendList, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let friendList = await Friendship.findAll({
-        where: whereData
-    })
-    return utils.classResponse(true, friendList, "")
 }
 
 /**
@@ -146,33 +164,34 @@ const allFriendsRequestList = async (reqUserid) => {
  * @returns 
  */
 const friendsTweets = async (friendListArr, oset) => {
-    let whereDataFriends = {
-        uid: friendListArr
-    }
-    let includeDataFriends = [
-        {
-            model: User, as: "user",
-            attributes: ['id', 'name']
-        },
-        {
-            model: Likes, as: "likes",
-            where:{
-                entity_type : TEXT.entityTweet
+    try {
+        let friendTweets = await Tweets.findAll({
+            where: {
+                uid: friendListArr
             },
-            required : false
-        }
-    ]
-    let orderDataFriends = [
-        ['createdAt', 'DESC']
-    ]
-    let friendTweets = await Tweets.findAll({
-        where: whereDataFriends,
-        include: includeDataFriends,
-        order: orderDataFriends,
-        offset: oset,
-        limit: constant.limitTweets
-    })
-    return utils.classResponse(true, friendTweets, "")
+            include: [
+                {
+                    model: User, as: "user",
+                    attributes: ['id', 'name']
+                },
+                {
+                    model: Likes, as: "likes",
+                    where:{
+                        entity_type : TEXT.entityTweet
+                    },
+                    required : false
+                }
+            ],
+            order: [
+                ['createdAt', 'DESC']
+            ],
+            offset: oset,
+            limit: Constant.limitTweets
+        })
+        return utils.classResponse(true, friendTweets, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
+    }
 }
 
 /**
@@ -182,18 +201,18 @@ const friendsTweets = async (friendListArr, oset) => {
  * @returns 
  */
 const isTweetLikedByMe = async (reqUserid, tweetid) => {
-    let whereData = {
-        user_id : reqUserid,
-        entity_type : TEXT.entityTweet,
-        entity_id : tweetid
+    try {
+        let isTweetLikedByMe = await Likes.findOne({
+            where: {
+                user_id : reqUserid,
+                entity_type : TEXT.entityTweet,
+                entity_id : tweetid
+            }
+        })
+        return utils.classResponse(true, isTweetLikedByMe, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let isTweetLikedByMe = await Likes.findOne({
-        where: whereData
-    })
-    if (isTweetLikedByMe == null) {
-        return utils.classResponse(false, "", "")
-    }
-    return utils.classResponse(true, isTweetLikedByMe, "")
 }
 
 /**
@@ -203,35 +222,36 @@ const isTweetLikedByMe = async (reqUserid, tweetid) => {
  * @returns 
  */
 const allLatestTweets = async (reqUserid, oset) => {
-    let whereData = {
-        uid:{
-            [Op.ne] : reqUserid
-        }
-    }
-    let includeData = [
-        {
-            model:User, as:"user",
-            attributes:['id', 'name']
-        },
-        {
-            model: Likes, as: "likes",
-            where:{
-                entity_type:TEXT.entityTweet
+    try {
+        let { count, rows } = await Tweets.findAndCountAll({
+            where: {
+                uid:{
+                    [Op.ne] : reqUserid
+                }
             },
-            required : false
-        }
-    ]
-    let orderData = [
-        ['createdAt', 'DESC']
-    ]
-    let { count, rows } = await Tweets.findAndCountAll({
-        where: whereData,
-        include: includeData,
-        order: orderData,
-        offset: oset,
-        limit: constant.limitTweets
-    })
-    return utils.classResponse(true, rows, "")
+            include: [
+                {
+                    model:User, as:"user",
+                    attributes:['id', 'name']
+                },
+                {
+                    model: Likes, as: "likes",
+                    where:{
+                        entity_type:TEXT.entityTweet
+                    },
+                    required : false
+                }
+            ],
+            order: [
+                ['createdAt', 'DESC']
+            ],
+            offset: oset,
+            limit: Constant.limitTweets
+        })
+        return utils.classResponse(true, rows, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
+    }
 }
 
 module.exports = { allFriends, friendshipCheck, friendshipRequestSend, friendRequestUpdate, friendsList, allFriendsRequestList, friendsTweets, isTweetLikedByMe, allLatestTweets }

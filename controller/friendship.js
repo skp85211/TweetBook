@@ -1,7 +1,8 @@
+const utils = require("../utils")
+
 const Friendship = require("../classes/Friendship/Friendship")
 
 const FriendshipFunc = require("../classes/Friendship/Function")
-const utils = require("../utils")
 const Constant = require("../classes/Friendship/Constant").Constant
 const ERRORS = require("../errorConstants").ERRORS
 
@@ -12,11 +13,12 @@ const ERRORS = require("../errorConstants").ERRORS
  * @param {Object} next
  * @returns 
  */
-exports.friendRequest = async(req, res, next) => {
+exports.friendRequest = async (req, res, next) => {
+    let body = req.body
     let user1id = parseInt(req.userid)
-    let user2id = parseInt(req.body.userid2)
+    let user2id = parseInt(body.userid2)
     let action_id = user1id
-    if(!user1id || isNaN(user1id) || !user2id || isNaN(user2id) || !action_id || isNaN(action_id)){
+    if (!user1id || isNaN(user1id) || !user2id || isNaN(user2id) || !action_id || isNaN(action_id)) {
         return utils.sendResponse(res, false, {}, ERRORS.someFieldsMissing)
     }
     //to make sure user1id < userid2 (always)
@@ -25,17 +27,19 @@ exports.friendRequest = async(req, res, next) => {
         user1id = user2id
         user2id = temp
     }
-    try {
-        let userPairResponse = await Friendship.friendshipCheck(user1id, user2id)
-        if (userPairResponse.data.length != 0) {
-            return utils.sendResponse(res, false, {}, ERRORS.alreadyInRelation)
-        }
-        let friendRequestResponse = await Friendship.friendshipRequestSend(user1id, user2id, action_id)
-        let friendRequest = friendRequestResponse.data
-        return utils.sendResponse(res, true, friendRequest, "")
-    } catch (error) {
-        return utils.sendResponse(res, false, {}, error)
+    let userPairResponse = await Friendship.friendshipCheck(user1id, user2id)
+    if (userPairResponse.success == false) {
+        return utils.sendResponse(res, false, {}, ERRORS.dbError)
     }
+    if (userPairResponse.data.length != 0) {
+        return utils.sendResponse(res, false, {}, ERRORS.alreadyInRelation)
+    }
+    let friendRequestResponse = await Friendship.friendshipRequestSend(user1id, user2id, action_id)
+    if (friendRequestResponse.success == false) {
+        return utils.sendResponse(res, false, {}, ERRORS.dbError)
+    }
+    let friendRequest = friendRequestResponse.data
+    return utils.sendResponse(res, true, friendRequest, "")
 }
 
 /**
@@ -45,11 +49,12 @@ exports.friendRequest = async(req, res, next) => {
  * @param {Object} next
  * @returns 
  */
-exports.friendRequestAccept = async(req, res, next) => {
+exports.friendRequestAccept = async (req, res, next) => {
+    let body = req.body
     let user1id = parseInt(req.userid)
-    let user2id = parseInt(req.body.userid2)
+    let user2id = parseInt(body.userid2)
     let action_id = user1id
-    if(!user1id || isNaN(user1id) || !user2id || isNaN(user2id) || !action_id || isNaN(action_id)){
+    if (!user1id || isNaN(user1id) || !user2id || isNaN(user2id) || !action_id || isNaN(action_id)) {
         return utils.sendResponse(res, false, {}, ERRORS.someFieldsMissing)
     }
     if (user1id > user2id) {
@@ -57,12 +62,11 @@ exports.friendRequestAccept = async(req, res, next) => {
         user1id = user2id
         user2id = temp
     }
-    try {
-        await Friendship.friendRequestUpdate(Constant.acceptedStatus, action_id, user1id, user2id)
-        return utils.sendResponse(res, true, {}, "")
-    } catch (error) {
-        return utils.sendResponse(res, false, {}, error)
+    let friendRequestUpdateResponse = await Friendship.friendRequestUpdate(Constant.acceptedStatus, action_id, user1id, user2id)
+    if (friendRequestUpdateResponse.success == false) {
+        return utils.sendResponse(res, false, {}, ERRORS.dbError)
     }
+    return utils.sendResponse(res, true, {}, "")
 }
 
 /**
@@ -72,11 +76,12 @@ exports.friendRequestAccept = async(req, res, next) => {
  * @param {Object} next
  * @returns 
  */
-exports.friendRequestReject = async(req, res, next) => {
+exports.friendRequestReject = async (req, res, next) => {
+    let body = req.body
     let user1id = parseInt(req.userid)
-    let user2id = parseInt(req.body.userid2)
+    let user2id = parseInt(body.userid2)
     let action_id = user1id
-    if(!user1id || isNaN(user1id) || !user2id || isNaN(user2id) || !action_id || isNaN(action_id)){
+    if (!user1id || isNaN(user1id) || !user2id || isNaN(user2id) || !action_id || isNaN(action_id)) {
         return utils.sendResponse(res, false, {}, ERRORS.someFieldsMissing)
     }
     if (user1id > user2id) {
@@ -84,12 +89,11 @@ exports.friendRequestReject = async(req, res, next) => {
         user1id = user2id
         user2id = temp
     }
-    try {
-        await Friendship.friendRequestUpdate(Constant.blockedStatus, action_id, user1id, user2id)
-        return utils.sendResponse(res, true, {}, "")
-    } catch (error) {
-        return utils.sendResponse(res, false, {}, error)
+    let friendRequestUpdateResponse = await Friendship.friendRequestUpdate(Constant.blockedStatus, action_id, user1id, user2id)
+    if (friendRequestUpdateResponse.success == false) {
+        return utils.sendResponse(res, false, {}, ERRORS.dbError)
     }
+    return utils.sendResponse(res, true, {}, "")
 }
 
 /**
@@ -99,13 +103,13 @@ exports.friendRequestReject = async(req, res, next) => {
  * @param {Object} next
  * @returns 
  */
-exports.friendsTweet = async(req, res, next) => {
-    let pageno = parseInt(req.headers.pageno);
-    if(!pageno || isNaN(pageno)){
+exports.friendsTweet = async (req, res, next) => {
+    let pageno = parseInt(req.query.pageno);
+    if (!pageno || isNaN(pageno)) {
         pageno = Constant.defaultPageNo
     }
     let reqUserid = parseInt(req.userid)
-    if(!reqUserid || isNaN(reqUserid)){
+    if (!reqUserid || isNaN(reqUserid)) {
         return utils.sendResponse(res, false, {}, ERRORS.someFieldsMissing)
     }
     pageno = pageno - 1;
@@ -113,24 +117,32 @@ exports.friendsTweet = async(req, res, next) => {
     let oset = (pageno * psize);
 
     let friendListResponse = await Friendship.friendsList(reqUserid)
+    if (friendListResponse.success == false) {
+        return utils.sendResponse(res, false, {}, ERRORS.dbError)
+    }
     let friendList = friendListResponse.data
     //if user doesn't have any friends , show all latest tweets
     if (friendList.length == 0) {
         let rowsRecordResponse = await Friendship.allLatestTweets(reqUserid, oset)
+        if (rowsRecordResponse.success == false) {
+            return utils.sendResponse(res, false, {}, ERRORS.dbError)
+        }
         let rowsRecord = rowsRecordResponse.data
-        for(let dataItems of rowsRecord){
+        for (let dataItems of rowsRecord) {
             dataItems["tweetLikesCount"] = FriendshipFunc.countDiffLikes(dataItems.likes)
-            if(dataItems.likes.length == 0){
+            if (dataItems.likes.length == 0) {
                 dataItems["isTweetLikedByMe"] = false
             }
-            else{
+            else {
                 let tweetid = dataItems.id
                 let isTweetLikedByMe = await Friendship.isTweetLikedByMe(reqUserid, tweetid)
-                if(isTweetLikedByMe.success == false){
-                    
+                if (isTweetLikedByMe.success == false) {
+                    return utils.sendResponse(res, false, {}, ERRORS.dbError)
+                }
+                if (isTweetLikedByMe.data == null) {
                     dataItems["isTweetLikedByMe"] = false
                 }
-                else{
+                else {
                     dataItems["isTweetLikedByMe"] = true
                     dataItems["likeType"] = isTweetLikedByMe.data.like_type
                 }
@@ -151,20 +163,26 @@ exports.friendsTweet = async(req, res, next) => {
     }
 
     let friendTweetsResponse = await Friendship.friendsTweets(friendListArr, oset)
+    if (friendTweetsResponse.success == false) {
+        return utils.sendResponse(res, false, {}, ERRORS.dbError)
+    }
     let friendTweets = friendTweetsResponse.data
-    for(let dataItems of friendTweets){
+    for (let dataItems of friendTweets) {
         dataItems["tweetLikesCount"] = FriendshipFunc.countDiffLikes(dataItems.likes)
-        if(dataItems.likes.length == 0){
+        if (dataItems.likes.length == 0) {
             dataItems["isTweetLikedByMe"] = false
         }
-        else{
+        else {
             let tweetid = dataItems.id
             let isTweetLikedByMe = await Friendship.isTweetLikedByMe(reqUserid, tweetid)
-            if(isTweetLikedByMe.success == false){
-                
+            if (isTweetLikedByMe.success == false) {
+                return utils.sendResponse(res, false, {}, ERRORS.dbError)
+            }
+            if (isTweetLikedByMe.data == null) {
+
                 dataItems["isTweetLikedByMe"] = false
             }
-            else{
+            else {
                 dataItems["isTweetLikedByMe"] = true
                 dataItems["likeType"] = isTweetLikedByMe.data.like_type
             }
@@ -180,14 +198,17 @@ exports.friendsTweet = async(req, res, next) => {
  * @param {Object} next
  * @returns 
  */
-exports.allFriendRequest = async(req, res, next) => {
+exports.allFriendRequest = async (req, res, next) => {
     let reqUserid = parseInt(req.userid)
-    if(!reqUserid || isNaN(reqUserid)){
+    if (!reqUserid || isNaN(reqUserid)) {
         return utils.sendResponse(res, false, {}, ERRORS.noUserId)
     }
     let friendListResponse = await Friendship.allFriendsRequestList(reqUserid)
+    if (friendListResponse.success == false) {
+        return utils.sendResponse(res, false, {}, ERRORS.dbError)
+    }
     let friendList = friendListResponse.data
-    if(friendList.length == 0) {
+    if (friendList.length == 0) {
         return utils.sendResponse(res, false, {}, ERRORS.noFriends)
     }
     let friendListArr = []
@@ -200,5 +221,8 @@ exports.allFriendRequest = async(req, res, next) => {
         }
     }
     let allFriendRequestResponse = await Friendship.allFriends(friendListArr)
+    if (allFriendRequestResponse.success == false) {
+        return utils.sendResponse(res, false, {}, ERRORS.dbError)
+    }
     return utils.sendResponse(res, true, allFriendRequestResponse.data, "")
 }

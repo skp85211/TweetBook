@@ -2,7 +2,7 @@ const express = require("express")
 const Router = express.Router()
 
 const friendshipFunc = require("../controller/friendship")
-const jwtAuth = require("../jwtAuth")
+const jwtAuth = require("../controller/jwtAuth")
 
 //Friend Request (creation of relation, status -> Pending(0))
 Router.post("/friendRequest", jwtAuth.authenticateToken,friendshipFunc.friendRequest)

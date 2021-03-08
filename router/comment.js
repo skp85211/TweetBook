@@ -1,7 +1,7 @@
 const express = require("express")
 const Router = express.Router()
 const commentFunc = require("../controller/comment")
-const jwtAuth = require("../jwtAuth")
+const jwtAuth = require("../controller/jwtAuth")
 
 //create Tweet comment
 Router.post("/create", jwtAuth.authenticateToken,commentFunc.createComment)

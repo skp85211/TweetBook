@@ -4,8 +4,8 @@
  * @param {Object} data 
  * @param {String} err 
  */
-exports.classResponse = (success, data, err) => {
-    let dataResponse = this.jsonParse(data)
+const classResponse = (success, data, err) => {
+    let dataResponse = jsonParse(data)
     return {
         "success": success,
         "data": dataResponse,
@@ -19,7 +19,7 @@ exports.classResponse = (success, data, err) => {
  * @param {Object} data 
  * @param {String} err 
  */
-exports.sendResponse = (res, success, data, err) => {
+const sendResponse = (res, success, data, err) => {
     return res.send(JSON.stringify({
         "success": success,
         "data": data,
@@ -32,6 +32,22 @@ exports.sendResponse = (res, success, data, err) => {
  * Parse JSON
  * @param {Object} data 
  */
-exports.jsonParse = (data) => {
+const jsonParse = (data) => {
     return JSON.parse(JSON.stringify(data))
 }
+
+/**
+ * Check if numbers (integers) are NaN or not
+ * @param  {...Integers} integers 
+ * @returns 
+ */
+const isNumberNaN = (...integers) =>{
+    for(i = 0; i<integers.length; i++){
+        if(isNaN(integers[i])){
+            return true
+        }
+    }
+    return false
+}
+
+module.exports = { classResponse, sendResponse, jsonParse, isNumberNaN }

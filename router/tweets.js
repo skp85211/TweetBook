@@ -2,7 +2,7 @@ const express = require("express")
 const Router = express.Router()
 
 const tweetFunc = require("../controller/tweets")
-const jwtAuth = require("../jwtAuth")
+const jwtAuth = require("../controller/jwtAuth")
 
 //for ALL tweets (latest tweet with pagination)
 Router.get("/all", jwtAuth.authenticateToken,tweetFunc.allLatestTweets)

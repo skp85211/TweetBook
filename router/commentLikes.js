@@ -1,7 +1,7 @@
 const express = require("express")
 const Router = express.Router()
 const commentLikesFunc = require("../controller/commentLikes")
-const jwtAuth = require("../jwtAuth")
+const jwtAuth = require("../controller/jwtAuth")
 
 //Create commentLikes entry, Likes a comment
 Router.post("/create", jwtAuth.authenticateToken,commentLikesFunc.createLike)

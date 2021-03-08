@@ -6,21 +6,25 @@ const Likes = require("../../model/Likes")
 const Constant = require("./Constant").Constant
 const utils = require("../../utils")
 
+const ERRORS = require("../../errorConstants").ERRORS
+
 /**
  * checks if tweet id exists or not in tweet database
  * @param {Integer} reqTweetid 
  * @returns 
  */
 const checkTweetIdExists = async (reqTweetid) => {
-    let whereData = { 
-        id : reqTweetid
+    try {
+        let tidCheck = await Tweets.findAll({
+            attributes: ['id'],
+            where: { 
+                id : reqTweetid
+            }
+        })
+        return utils.classResponse(true, tidCheck, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let attr = ['id']
-    let tidCheck = await Tweets.findAll({
-        attributes: attr,
-        where: whereData
-    })
-    return utils.classResponse(true, tidCheck, "")
 }
 
 /**
@@ -29,15 +33,18 @@ const checkTweetIdExists = async (reqTweetid) => {
  * @returns 
  */
 const checkUserIdExists = async (reqUserid) => {
-    let attribute = ['id']
-        let whereData = {
-            id:reqUserid
-        }
-    let uidCheck = await User.findAll({
-        attributes: attribute,
-        where: whereData
-    })
-    return utils.classResponse(true, uidCheck, "")
+    try {
+        let uidCheck = await User.findAll({
+            attributes: ['id'],
+            where: {
+                id:reqUserid
+            }
+        })
+        return utils.classResponse(true, uidCheck, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
+    }
+    
 }
 
 /**
@@ -47,12 +54,17 @@ const checkUserIdExists = async (reqUserid) => {
  * @param {String} comment 
  */
 const createComment = async (tid, uid, comment) => {
-    let newComment = await Comment.create({
-        tid: tid,
-        uid: uid,
-        comment: comment,
-    })
-    return utils.classResponse(true, newComment, "")
+    try {
+        let newComment = await Comment.create({
+            tid: tid,
+            uid: uid,
+            comment: comment,
+        })
+        return utils.classResponse(true, newComment, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
+    }
+    
 }
 
 /**
@@ -61,17 +73,20 @@ const createComment = async (tid, uid, comment) => {
  * @returns 
  */
 const readComment = async (reqTweetid) => {
-    let whereData = {
-        tid : reqTweetid
+    try {
+        let comments = await Comment.findAll({
+            where: {
+                tid : reqTweetid
+            },
+            order: [
+                ['createdAt', 'DESC']
+            ]
+        })
+        return utils.classResponse(true, comments, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let orderData = ['createdAt', 'DESC']
-    let comments = await Comment.findAll({
-        where: whereData,
-        order: [
-            orderData
-        ]
-    })
-    return utils.classResponse(true, comments, "")
+    
 }
 
 /**
@@ -83,18 +98,20 @@ const readComment = async (reqTweetid) => {
  * @returns 
  */
 const updateComment = async (reqId, reqTweetid, reqUserid, reqComment) => {
-    let updateData = {comment : reqComment}
-    let whereData = {
-        [Op.and] : [
-            {id:reqId},
-            {tid:reqTweetid},
-            {uid: reqUserid}
-        ]
+    try {
+        let updateComment = await Comment.update({comment : reqComment}, {
+            where:{
+                [Op.and] : [
+                    {id:reqId},
+                    {tid:reqTweetid},
+                    {uid: reqUserid}
+                ]
+            }
+        })
+        return utils.classResponse(true, updateComment, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let updateComment = await Comment.update(updateData, {
-        where: whereData
-    })
-    return utils.classResponse(true, updateComment, "")
 }
 
 /**
@@ -105,15 +122,18 @@ const updateComment = async (reqId, reqTweetid, reqUserid, reqComment) => {
  * @returns 
  */
 const deleteComment = async (reqId, reqTweetid, reqUserid) => {
-    let whereData = {
-        id: reqId,
-        tid:reqTweetid,
-        uid: reqUserid
+    try {
+        let deleteComment = await Comment.destroy({
+            where: {
+                id: reqId,
+                tid:reqTweetid,
+                uid: reqUserid
+            }
+        })
+        return utils.classResponse(true, deleteComment, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let deleteComment = await Comment.destroy({
-        where: whereData
-    })
-    return utils.classResponse(true, deleteComment, "")
 }
 
 /**
@@ -121,10 +141,14 @@ const deleteComment = async (reqId, reqTweetid, reqUserid) => {
  * @returns 
  */
 const allInComment = async () => {
-    let allComments = await Tweets.findAll({
-        include: ["comments"]
-    })
-    return utils.classResponse(true, allComments, "")
+    try {
+        let allComments = await Tweets.findAll({
+            include: ["comments"]
+        })
+        return utils.classResponse(true, allComments, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
+    }
 }
 
 /**
@@ -134,29 +158,30 @@ const allInComment = async () => {
  * @returns 
  */
 const commentsUnderTweetsdb = async (reqTweetid, oset) => {
-    let whereData = {
-        tid:reqTweetid
+    try {
+        let { count, rows } = await Comment.findAndCountAll({
+            where: {
+                tid:reqTweetid
+            },
+            include: [
+                {
+                    model:User, as:"user",
+                    attributes:['id','name']
+                },
+                {
+                    model : Likes, as:"likes"
+                }
+            ],
+            order: [
+                ['createdAt', 'DESC']
+            ],
+            offset: oset,
+            limit: Constant.limitComment
+        })
+        return utils.classResponse(true, rows, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let includeData = [
-        {
-            model:User, as:"user",
-            attributes:['id','name']
-        },
-        {
-            model : Likes, as:"likes"
-        }
-    ]
-    let orderData = [
-        ['createdAt', 'DESC']
-    ]
-    let { count, rows } = await Comment.findAndCountAll({
-        where: whereData,
-        include: includeData,
-        order: orderData,
-        offset: oset,
-        limit: Constant.limitComment
-    })
-    return utils.classResponse(true, rows, "")
 }
 
 module.exports = { checkTweetIdExists, checkUserIdExists, createComment, readComment, updateComment, deleteComment, allInComment, commentsUnderTweetsdb }

@@ -1,11 +1,12 @@
+const utils = require("../utils");
+
 const User = require("../classes/User/User")
 
-const utils = require("../utils");
 const UserFunction = require("../classes//User/Function")
 const TEXT = require("../text").TEXT
 const ERRORS = require('../errorConstants').ERRORS
 const ConstantFile = require("../classes/User/Constant").Constant
-const jwtauth = require("../jwtAuth")
+const jwtauth = require("./jwtAuth")
 
 /**
  * search user with email/phone and friendship relation and return details
@@ -15,25 +16,27 @@ const jwtauth = require("../jwtAuth")
  * @returns 
  */
 exports.searchUser = async (req, res, next) => {
-    let reqEmailorName = (req.body.email || "").toString()
+    let body = req.body
+    let reqEmailorName = (body.email || "")
     let reqUserid = parseInt(req.userid)
     let errors = UserFunction.emptySearchField(reqEmailorName, reqUserid)
     if (errors.length) {
-        return utils.sendResponse(res,false, {}, errors.join(","))
+        return utils.sendResponse(res, false, {}, errors.join(","))
     }
-    try {
-        let userSearchResponse = await User.searchUser(reqUserid, reqEmailorName)
-        if (userSearchResponse.data.length == 0) {
-            let data = { relationStatus: false }
-            return utils.sendResponse(res,false, data, ERRORS.noUser)
-        }
-        let userSearchArray = await UserFunction.userSearch(userSearchResponse.data, reqUserid)
-        return utils.sendResponse(res,true, userSearchArray, "")
-    } catch (error) {
-        return utils.sendResponse(res,false, {}, error)
+    let userSearchResponse = await User.searchUser(reqUserid, reqEmailorName)
+    if (userSearchResponse.success == false) {
+        return utils.sendResponse(res, false, {}, ERRORS.dbError)
     }
+    if (userSearchResponse.data.length == 0) {
+        let data = { relationStatus: false }
+        return utils.sendResponse(res, false, data, ERRORS.noUser)
+    }
+    let userSearchArray = await UserFunction.userSearch(userSearchResponse.data, reqUserid)
+    if (userSearchArray.success == false) {
+        return utils.sendResponse(res, false, {}, ERRORS.dbError)
+    }
+    return utils.sendResponse(res, true, userSearchArray, "")
 }
-
 
 /**
  * Gets all tweets of particular user with pagination
@@ -43,27 +46,26 @@ exports.searchUser = async (req, res, next) => {
  * @returns 
  */
 exports.usersAllTweets = async (req, res, next) => {
-    try {
-        let pageno = parseInt(req.headers.pagenum);
-        if(!pageno || isNaN(pageno)){
-            pageno = ConstantFile.defaultPageNo
-        }
-        let pageSize = parseInt(req.headers.pagesize);
-        if(!pageSize || isNaN(pageSize)){
-            pageSize = ConstantFile.defaultPageSize
-        }
-        let userid = parseInt(req.userid)
-        let errors = UserFunction.emptyusersAllTweets(pageno, pageSize, userid)
-        if (errors.length) {
-            return utils.sendResponse(res,false, {}, errors.join(","))
-        }
-        pageno = pageno - 1;
-        let offsetValue = (pageno * pageSize);
-        let rowsRecord = await User.usersTweet(userid, offsetValue, pageSize)
-        return utils.sendResponse(res,true, rowsRecord.data, "")
-    } catch (error) {
-        return utils.sendResponse(res, false, {}, error)
+    let pageno = parseInt(req.query.pagenum);
+    if (!pageno || isNaN(pageno)) {
+        pageno = ConstantFile.defaultPageNo
     }
+    let pageSize = parseInt(req.query.pagesize);
+    if (!pageSize || isNaN(pageSize)) {
+        pageSize = ConstantFile.defaultPageSize
+    }
+    let userid = parseInt(req.userid)
+    let errors = UserFunction.emptyusersAllTweets(pageno, pageSize, userid)
+    if (errors.length) {
+        return utils.sendResponse(res, false, {}, errors.join(","))
+    }
+    pageno = pageno - 1;
+    let offsetValue = (pageno * pageSize);
+    let rowsRecord = await User.usersTweet(userid, offsetValue, pageSize)
+    if (rowsRecord.success == false) {
+        return utils.sendResponse(res, false, {}, ERRORS.dbError)
+    }
+    return utils.sendResponse(res, true, rowsRecord.data, "")
 }
 
 /**
@@ -74,12 +76,11 @@ exports.usersAllTweets = async (req, res, next) => {
  * @returns 
  */
 exports.allUsersAllTweets = async (req, res, next) => {
-    try {
-        let allUsersAllTweets = await User.allUsersAllTweets()
-        return utils.sendResponse(res,true, allUsersAllTweets.data, "")
-    } catch (error) {
-        return utils.sendResponse(res,false, {}, error)
+    let allUsersAllTweets = await User.allUsersAllTweets()
+    if (allUsersAllTweets.success == false) {
+        return utils.sendResponse(res, false, {}, ERRORS.dbError)
     }
+    return utils.sendResponse(res, true, allUsersAllTweets.data, "")
 }
 
 /**
@@ -90,7 +91,8 @@ exports.allUsersAllTweets = async (req, res, next) => {
  * @returns 
  */
 exports.emailVerification = async (req, res, next) => {
-    let reqEmail = (req.body.email || "").toString()
+    let body = req.body
+    let reqEmail = (body.email || "")
     let errors = []
     if (!reqEmail) {
         errors.push(TEXT.noEmail)
@@ -98,16 +100,15 @@ exports.emailVerification = async (req, res, next) => {
     if (errors.length) {
         return utils.sendResponse(res, false, {}, errors.join(","))
     }
-    try {
-        let loginEmail = await User.searchUserwithEmail(reqEmail)
-        if (loginEmail.data.length == 0) {
-            return utils.sendResponse(res, false, {}, ERRORS.noUserExists)
-        }
-        else {
-            return utils.sendResponse(res, true, {}, "")
-        }
-    } catch (error) {
-        return utils.sendResponse(res, false, {}, error)
+    let loginEmail = await User.searchUserwithEmail(reqEmail)
+    if (loginEmail.success == false) {
+        return utils.sendResponse(res, false, {}, ERRORS.dbError)
+    }
+    if (loginEmail.data.length == 0) {
+        return utils.sendResponse(res, false, {}, ERRORS.noUserExists)
+    }
+    else {
+        return utils.sendResponse(res, true, {}, "")
     }
 }
 
@@ -119,34 +120,34 @@ exports.emailVerification = async (req, res, next) => {
  * @returns 
  */
 exports.loginPasswordAuth = async (req, res, next) => {
-    let reqEmail = (req.body.email || "").toString()
-    let reqPassword = (req.body.password || "").toString()
+    let body = req.body
+    let reqEmail = (body.email || "")
+    let reqPassword = (body.password || "")
     let errors = UserFunction.emptyLoginField(reqEmail, reqPassword)
     if (errors.length) {
         return utils.sendResponse(res, false, {}, errors.join(","))
     }
-    try {
-        let loginResponse = await User.searchUserwithEmail(reqEmail)
-        let login = loginResponse.data[0]
-        if (login.length == 0) {
-            return utils.sendResponse(res, false, {}, ERRORS.noUserExists)
+    let loginResponse = await User.searchUserwithEmail(reqEmail)
+    if (loginResponse.success == false) {
+        return utils.sendResponse(res, false, {}, ERRORS.dbError)
+    }
+    let login = loginResponse.data[0]
+    if (login.length == 0) {
+        return utils.sendResponse(res, false, {}, ERRORS.noUserExists)
+    }
+    if (login.password != reqPassword) {
+        return utils.sendResponse(res, false, {}, ERRORS.noPasswordMatch)
+    }
+    else {
+        console.log(login.id, "id")
+        let accessToken = jwtauth.generateAccessToken(login.id)
+        let data = {
+            userId: login.id,
+            name: login.name,
+            email: login.email,
+            token: accessToken
         }
-        if (login.password != reqPassword) {
-            return utils.sendResponse(res, false, {}, ERRORS.noPasswordMatch)
-        }
-        else {
-            console.log(login.id, "id")
-            let accessToken = jwtauth.generateAccessToken(login.id)
-            let data = {
-                userId: login.id,
-                name: login.name,
-                email: login.email,
-                token : accessToken
-            }
-            return utils.sendResponse(res, true, data, "")
-        }
-    } catch (error) {
-        return utils.sendResponse(res, false, {}, error)
+        return utils.sendResponse(res, true, data, "")
     }
 }
 
@@ -158,19 +159,19 @@ exports.loginPasswordAuth = async (req, res, next) => {
  * @returns 
  */
 exports.signupUser = async (req, res, next) => {
-    let reqName = (req.body.name || "").toString()
-    let reqEmail = (req.body.email || "").toString()
-    let reqPassword = (req.body.password || "").toString()
+    let body = req.body
+    let reqName = (body.name || "")
+    let reqEmail = (body.email || "")
+    let reqPassword = (body.password || "")
     let errors = UserFunction.emptySignupField(reqName, reqEmail, reqPassword)
     if (errors.length) {
         return utils.sendResponse(res, false, {}, errors.join(","))
     }
-    try {
-        await User.signupUser(reqName, reqEmail, reqPassword)
-        return utils.sendResponse(res, true, {}, "")
-    } catch (error) {
-        return utils.sendResponse(res, false, {}, error)
+    let signupResponse = await User.signupUser(reqName, reqEmail, reqPassword)
+    if (signupResponse.success == false) {
+        return utils.sendResponse(res, false, {}, ERRORS.dbError)
     }
+    return utils.sendResponse(res, true, {}, "")
 }
 
 /**
@@ -182,54 +183,58 @@ exports.signupUser = async (req, res, next) => {
  */
 exports.updateNamePassword = async (req, res, next) => {
     //updating Name
-    let reqType = parseInt(req.body.type)
+    let body = req.body
+    let reqType = parseInt(body.type)
     if (!reqType) {
         return utils.sendResponse(res, false, {}, ERRORS.noUpdateType)
     }
     if (reqType == ConstantFile.updateTypeName) {
         let reqUserid = parseInt(req.userid)
-        let reqName = (req.body.name || "").toString()
-        let reqPassword = (req.body.password || "").toString()
+        let reqName = (body.name || "")
+        let reqPassword = (body.password || "")
         let errors = UserFunction.emptyUpdateName(reqUserid, reqName, reqPassword)
         if (errors.length) {
             return utils.sendResponse(res, false, {}, errors.join(","))
         }
-
-        try {
-            let loginResponse = await User.searchUserwithId(reqUserid)
-            let login = loginResponse.data[0]
-            if (login.password != reqPassword) {
-                return utils.sendResponse(res, false, {}, ERRORS.noPasswordMatch)
+        let loginResponse = await User.searchUserwithId(reqUserid)
+        if (loginResponse.success == false) {
+            return utils.sendResponse(res, false, {}, ERRORS.dbError)
+        }
+        let login = loginResponse.data[0]
+        if (login.password != reqPassword) {
+            return utils.sendResponse(res, false, {}, ERRORS.noPasswordMatch)
+        }
+        else {
+            let updateNameResponse = await User.updateName(reqName, reqUserid)
+            if (updateNameResponse.success == false) {
+                return utils.sendResponse(res, false, {}, ERRORS.dbError)
             }
-            else {
-                await User.updateName(reqName, reqUserid)
-                return utils.sendResponse(res, true, {}, "")
-            }
-        } catch (error) {
-            return utils.sendResponse(res, false, {}, error)
+            return utils.sendResponse(res, true, {}, "")
         }
     }
     //updating password
     if (reqType == ConstantFile.updateTypePassword) {
         let reqUserid = parseInt(req.userid)
-        let reqPassword = (req.body.password || "").toString()
-        let reqNewPassword = (req.body.newpassword || "").toString()
+        let reqPassword = (body.password || "")
+        let reqNewPassword = (body.newpassword || "")
         let errors = UserFunction.emptyUpdatePassword(reqUserid, reqPassword, reqNewPassword)
         if (errors.length) {
             return utils.sendResponse(res, false, {}, errors.join(","))
         }
-        try {
-            let loginResponse = await User.searchUserwithId(reqUserid)
-            let login = loginResponse.data[0]
-            if (login.password != reqPassword) {
-                return utils.sendResponse(res, false, {}, ERRORS.noPasswordMatch)
+        let loginResponse = await User.searchUserwithId(reqUserid)
+        if (loginResponse.success == false) {
+            return utils.sendResponse(res, false, {}, ERRORS.dbError)
+        }
+        let login = loginResponse.data[0]
+        if (login.password != reqPassword) {
+            return utils.sendResponse(res, false, {}, ERRORS.noPasswordMatch)
+        }
+        else {
+            let updatePasswordResponse = await User.updatePassword(reqNewPassword, reqUserid)
+            if (updatePasswordResponse.success == false) {
+                return utils.sendResponse(res, false, {}, ERRORS.dbError)
             }
-            else {
-                await User.updatePassword(reqNewPassword, reqUserid)
-                return utils.sendResponse(res, true, {}, "")
-            }
-        } catch (error) {
-            return utils.sendResponse(res, false, {}, error)
+            return utils.sendResponse(res, true, {}, "")
         }
     }
 }

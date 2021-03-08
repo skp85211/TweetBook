@@ -1,6 +1,9 @@
+const utils = require("../../utils")
+
 const Friendship = require("../Friendship/Friendship")
 
 const TEXT = require("../../text").TEXT
+const ERRORS = require("../../errorConstants").ERRORS
 
 /**
  * Check if search field is empty or not
@@ -13,7 +16,7 @@ const emptySearchField = (email, uid) => {
     if (!email) {
         errors.push(TEXT.noEmail)
     }
-    if (!uid || isNaN(uid)) {
+    if (utils.isNumberNaN(uid)) {
         errors.push(TEXT.noUserId)
     }
     return errors
@@ -69,7 +72,7 @@ const emptySignupField = (name, email, password) => {
  */
 const emptyUpdateName = (uid, name, password) => {
     let errors = []
-    if (!uid || isNaN(uid)) {
+    if (utils.isNumberNaN(uid)) {
         errors.push(TEXT.noUserId)
     }
     if (!name) {
@@ -90,7 +93,7 @@ const emptyUpdateName = (uid, name, password) => {
  */
 const emptyUpdatePassword = (uid, password, newpassword) => {
     let errors = []
-    if (!uid || isNaN(uid)) {
+    if (utils.isNumberNaN(uid)) {
         errors.push(TEXT.noUserId)
     }
     if (!password) {
@@ -111,14 +114,17 @@ const emptyUpdatePassword = (uid, password, newpassword) => {
  */
 const emptyusersAllTweets = (pageno, pageSize, userid) => {
     let errors = []
-    if (!pageno || isNaN(pageno)) {
-        errors.push(TEXT.noPageNo)
-    }
-    if (!pageSize || isNaN(pageSize)) {
-        errors.push(TEXT.noPageSize)
-    }
-    if (!userid || isNaN(userid)) {
-        errors.push(TEXT.noUserId)
+    // if (!pageno || isNaN(pageno)) {
+    //     errors.push(TEXT.noPageNo)
+    // }
+    // if (!pageSize || isNaN(pageSize)) {
+    //     errors.push(TEXT.noPageSize)
+    // }
+    // if (!userid || isNaN(userid)) {
+    //     errors.push(TEXT.noUserId)
+    // }
+    if(utils.isNumberNaN(pageno, pageSize, userid)){
+        errors.push(TEXT.someFieldsMissing)
     }
     return errors
 }
@@ -142,6 +148,9 @@ const userSearch = async (userSearchArray, reqUserid) => {
             userid2 = temp
         }
         const userRelationSearchResponse = await Friendship.friendshipCheck(userid1, userid2)
+        if(userRelationSearchResponse.success == false){
+            return utils.classResponse(false, {}, ERRORS.dbError)
+        }
         const userRelationSearch = userRelationSearchResponse.data
         if (userRelationSearch.length == 0) {
             userSearch["friends"] = {
@@ -163,7 +172,7 @@ const userSearch = async (userSearchArray, reqUserid) => {
             }
         }
     }
-    return userSearchArray
+    return utils.classResponse(true, userSearchArray, "")
 }
 
 module.exports = { emptySearchField, emptyLoginField, emptySignupField, emptyUpdateName, emptyUpdateName, emptyUpdatePassword, emptyusersAllTweets, userSearch }

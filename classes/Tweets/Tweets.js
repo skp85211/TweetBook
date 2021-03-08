@@ -1,3 +1,5 @@
+const utils = require("../../utils")
+
 const { Op } = require("sequelize")
 
 const Tweets = require("../../model/Tweets")
@@ -5,7 +7,6 @@ const User = require("../../model/User")
 const Comment = require("../../model/Comments")
 
 const Constant = require("./Constant").Constant
-const utils = require("../../utils")
 
 /**
  * for ALL tweets (latest tweet with pagination)
@@ -14,28 +15,29 @@ const utils = require("../../utils")
  * @returns 
  */
 const allLatestTweets = async (reqUserid, oset) => {
-    let whereData = {
-        uid:{
-            [Op.ne] : reqUserid
-        }
+    try {
+        let { count, rows } = await Tweets.findAndCountAll({
+            where: {
+                uid:{
+                    [Op.ne] : reqUserid
+                }
+            },
+            include: [
+                {
+                    model:User, as:"user",
+                    attributes:['id', 'name']
+                }
+            ],
+            order: [
+                ['createdAt', 'DESC']
+            ],
+            offset: oset,
+            limit: Constant.limitTweets
+        })
+        return utils.classResponse(true, rows, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let includeData = [
-        {
-            model:User, as:"user",
-            attributes:['id', 'name']
-        }
-    ]
-    let orderData = [
-        ['createdAt', 'DESC']
-    ]
-    let { count, rows } = await Tweets.findAndCountAll({
-        where: whereData,
-        include: includeData,
-        order: orderData,
-        offset: oset,
-        limit: Constant.limitTweets
-    })
-    return utils.classResponse(true, rows, "")
 }
 
 /**
@@ -45,12 +47,16 @@ const allLatestTweets = async (reqUserid, oset) => {
  * @returns 
  */
 const createTweet = async (reqUserid, reqTweet) => {
-    let createData = {
-        uid: reqUserid, 
-        tweet: reqTweet
+    try {
+        let newTweet = await Tweets.create({
+            uid: reqUserid, 
+            tweet: reqTweet
+        })
+        return utils.classResponse(true, newTweet, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let newTweet = await Tweets.create(createData)
-    return utils.classResponse(true, newTweet, "")
+    
 }
 
 /**
@@ -59,17 +65,20 @@ const createTweet = async (reqUserid, reqTweet) => {
  * @returns 
  */
 const readTweet = async (reqUserid) => {
-    let whereData = {
-        uid:reqUserid
-    }
-    let orderData = [
-        ['createdAt', 'DESC']
-    ]
-    let tweets = await Tweets.findAll({
-        where: whereData,
-        order: orderData
-    })
-    return utils.classResponse(true, tweets, "")
+    try {
+        let tweets = await Tweets.findAll({
+            where: {
+                uid:reqUserid
+            },
+            order: [
+                ['createdAt', 'DESC']
+            ]
+        })
+        return utils.classResponse(true, tweets, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
+    } 
+    
 }
 
 /**
@@ -80,15 +89,18 @@ const readTweet = async (reqUserid) => {
  * @returns 
  */
 const updateTweet = async (reqId, reqUserid, reqTweet) => {
-    let updateData = {tweet : reqTweet}
-    let whereData = {
-        id: reqId,
-        uid: reqUserid
+    try {
+        let updateTweet = await Tweets.update({tweet : reqTweet}, {
+            where: {
+                id: reqId,
+                uid: reqUserid
+            }
+        })
+        return utils.classResponse(true, updateTweet, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let updateTweet = await Tweets.update(updateData, {
-        where: whereData
-    })
-    return utils.classResponse(true, updateTweet, "")
+    
 }
 
 /**
@@ -98,14 +110,17 @@ const updateTweet = async (reqId, reqUserid, reqTweet) => {
  * @returns 
  */
  const deleteTweet = async (reqId, reqUserid) => {
-    let whereData = {
-        id: reqId,
-        uid: reqUserid
+    try {
+        let deleteTweet = await Tweets.destroy({
+            where: {
+                id: reqId,
+                uid: reqUserid
+            }
+        })
+        return utils.classResponse(true, deleteTweet, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
     }
-    let deleteTweet = await Tweets.destroy({
-        where: whereData
-    })
-    return utils.classResponse(true, deleteTweet, "")
 }
 
 /**
@@ -115,33 +130,34 @@ const updateTweet = async (reqId, reqUserid, reqTweet) => {
  * @returns 
  */
 const allTweetCommentsWithUser = async (tweetid, oset) => {
-    let whereData = {
-        id:{
-            [Op.eq] : tweetid
-        }
-    }
-    let includeData = [
-        {
-            model:Comment, as:"comments",
-            include : [
+    try {
+        let { count, rows } = await Tweets.findAndCountAll({
+            where: {
+            id:{
+                [Op.eq] : tweetid
+            }
+        },
+            include: [
                 {
-                    model:User, as:"user",
-                    attributes:['id', 'name']
+                    model:Comment, as:"comments",
+                    include : [
+                        {
+                            model:User, as:"user",
+                            attributes:['id', 'name']
+                        }
+                    ]
                 }
-            ]
-        }
-    ]
-    let orderData = [
-        ['createdAt', 'DESC']
-    ]
-    let { count, rows } = await Tweets.findAndCountAll({
-        where: whereData,
-        include: includeData,
-        order: orderData,
-        offset: oset,
-        limit: Constant.limitTweets
-    })
-    return utils.classResponse(true, rows, "")
+            ],
+            order: [
+                ['createdAt', 'DESC']
+            ],
+            offset: oset,
+            limit: Constant.limitTweets
+        })
+        return utils.classResponse(true, rows, "")
+    } catch (error) {
+        return utils.classResponse(false, {}, error)
+    }
 }
 
 module.exports = { allLatestTweets, createTweet, readTweet, updateTweet, deleteTweet, allTweetCommentsWithUser }
